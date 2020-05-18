@@ -17,11 +17,17 @@ namespace airs
 		Shader(const Shader&) = delete;
 		Shader& operator=(const Shader&) = delete;
 		Shader(Shader&& s) noexcept;
+		Shader();
 		Shader(const std::string& vs, const std::string& gs, const std::string& fs);
 		Shader(const std::string& vs, const std::string& fs);
 		Shader(const std::string& shader);
 		Shader(std::istream& stream);
 		~Shader();
+
+		void Load(const std::string& vs, const std::string& gs, const std::string& fs);
+		void Load(const std::string& vs, const std::string& fs);
+		void Load(const std::string& shader);
+		friend std::istream& operator>>(std::istream& is, Shader& shader);
 
 		int32_t Uniform(const std::string& uniform) const;
 		void Uniform(int32_t location, float x) const;

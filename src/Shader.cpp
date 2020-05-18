@@ -7,14 +7,38 @@
 
 namespace airs
 {
-	Shader::Shader(Shader&& s) noexcept
+	Shader::Shader(Shader&& s) noexcept 
 	{
 		std::swap(ProgramID, s.ProgramID);
 	}
-	Shader::Shader(const std::string& vs, const std::string& gs, const std::string& fs) : ProgramID(glCreateProgram())
+	Shader::Shader() : ProgramID(glCreateProgram())
 	{
 		if (!ProgramID) throw std::runtime_error("airs::Shader error: Shader program creation failed.\n");
+	}
+	Shader::Shader(const std::string& vs, const std::string& gs, const std::string& fs) : Shader()
+	{
+		Load(vs, gs, fs);
+	}
+	Shader::Shader(const std::string& vs, const std::string& fs) : Shader()
+	{
+		Load(vs, fs);
+	}
+	Shader::Shader(const std::string& shader) : Shader()
+	{
+		Load(shader);
+	}
+	Shader::Shader(std::istream& stream) : Shader()
+	{
+		Load(std::string(std::istreambuf_iterator<char>(stream), {}));
+	}
+	Shader::~Shader()
+	{
+		if (ProgramID) glDeleteProgram(ProgramID);
+		ProgramID = 0;
+	}
 
+	void Shader::Load(const std::string& vs, const std::string& gs, const std::string& fs)
+	{
 		uint32_t VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
 		if (!VertexShaderID) throw std::runtime_error("airs::Shader error: Vertex shader creation failed.\n");
 		uint32_t GeometryShaderID = gs.empty() ? 0 : glCreateShader(GL_GEOMETRY_SHADER);
@@ -92,10 +116,11 @@ namespace airs
 		if (!gs.empty()) glDeleteShader(GeometryShaderID);
 		glDeleteShader(FragmentShaderID);
 	}
-	Shader::Shader(const std::string& vs, const std::string& fs) : Shader(vs, "", fs)
+	void Shader::Load(const std::string& vs, const std::string& fs)
 	{
+		Load(vs, "", fs);
 	}
-	Shader::Shader(const std::string& shader) : ProgramID(glCreateProgram())
+	void Shader::Load(const std::string& shader)
 	{
 		enum
 		{
@@ -127,11 +152,6 @@ namespace airs
 				else if (CurrentShader == FRAGMENT) fs += line + "\n";
 			}
 		}
-		vs += "\n\n\n\n\n";
-		if (!gs.empty()) gs += "\n\n\n\n\n";
-		fs += "\n\n\n\n\n";
-
-		if (!ProgramID) throw std::runtime_error("airs::Shader error: Shader program creation failed.\n");
 
 		uint32_t VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
 		if (!VertexShaderID) throw std::runtime_error("airs::Shader error: Vertex shader creation failed.\n");
@@ -210,120 +230,10 @@ namespace airs
 		if (!gs.empty()) glDeleteShader(GeometryShaderID);
 		glDeleteShader(FragmentShaderID);
 	}
-	Shader::Shader(std::istream& stream) : ProgramID(glCreateProgram())
+	std::istream& operator>>(std::istream& is, Shader& shader)
 	{
-		enum
-		{
-			NONE,
-			VERTEX,
-			GEOMETRY,
-			FRAGMENT
-		} CurrentShader = NONE;
-
-		std::string vs = "";
-		std::string gs = "";
-		std::string fs = "";
-
-		std::string line;
-		while (getline(stream, line))
-		{
-			if (line.find("#shader") == 0)
-			{
-				if (line.find("vertex") != std::string::npos) CurrentShader = VERTEX;
-				else if (line.find("geometry") != std::string::npos) CurrentShader = GEOMETRY;
-				else if (line.find("fragment") != std::string::npos) CurrentShader = FRAGMENT;
-				else CurrentShader = NONE;
-			}
-			else
-			{
-				if (CurrentShader == VERTEX) vs += line + "\n";
-				else if (CurrentShader == GEOMETRY) gs += line + "\n";
-				else if (CurrentShader == FRAGMENT) fs += line + "\n";
-			}
-		}
-		if (!ProgramID) throw std::runtime_error("airs::Shader error: Shader program creation failed.\n");
-
-		uint32_t VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
-		if (!VertexShaderID) throw std::runtime_error("airs::Shader error: Vertex shader creation failed.\n");
-		uint32_t GeometryShaderID = gs.empty() ? 0 : glCreateShader(GL_GEOMETRY_SHADER);
-		if (!gs.empty() && !GeometryShaderID) throw std::runtime_error("airs::Shader error: Geometry shader creation failed.\n");
-		uint32_t FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
-		if (!FragmentShaderID) throw std::runtime_error("airs::Shader error: Fragment shader creation failed.\n");
-
-		const char* cvs = vs.c_str();
-		const char* cgs = gs.c_str();
-		const char* cfs = fs.c_str();
-
-		int32_t Success;
-
-		glShaderSource(VertexShaderID, 1, &cvs, 0);
-		glCompileShader(VertexShaderID);
-		glGetShaderiv(VertexShaderID, GL_COMPILE_STATUS, &Success);
-		if (!Success)
-		{
-			int32_t lenght;
-			std::string templog;
-			glGetShaderiv(VertexShaderID, GL_INFO_LOG_LENGTH, &lenght);
-			templog.resize(lenght);
-			glGetShaderInfoLog(VertexShaderID, lenght, 0, &templog[0]);
-			throw std::runtime_error("airs::Shader error: Vertex shader compilation failed:\n" + templog);
-		}
-
-		if (!gs.empty())
-		{
-			glShaderSource(GeometryShaderID, 1, &cgs, 0);
-			glCompileShader(GeometryShaderID);
-			glGetShaderiv(GeometryShaderID, GL_COMPILE_STATUS, &Success);
-			if (!Success)
-			{
-				int32_t lenght;
-				std::string templog;
-				glGetShaderiv(GeometryShaderID, GL_INFO_LOG_LENGTH, &lenght);
-				templog.resize(lenght);
-				glGetShaderInfoLog(GeometryShaderID, lenght, 0, &templog[0]);
-				throw std::runtime_error("airs::Shader error: Geometry shader compilation failed:\n" + templog);
-			}
-		}
-
-		glShaderSource(FragmentShaderID, 1, &cfs, 0);
-		glCompileShader(FragmentShaderID);
-		glGetShaderiv(FragmentShaderID, GL_COMPILE_STATUS, &Success);
-		if (!Success)
-		{
-			int32_t lenght;
-			std::string templog;
-			glGetShaderiv(FragmentShaderID, GL_INFO_LOG_LENGTH, &lenght);
-			templog.resize(lenght);
-			glGetShaderInfoLog(FragmentShaderID, lenght, 0, &templog[0]);
-			throw std::runtime_error("airs::Shader error: Fragment shader compilation failed:\n" + templog);
-		}
-
-		glAttachShader(ProgramID, VertexShaderID);
-		if (!gs.empty()) glAttachShader(ProgramID, GeometryShaderID);
-		glAttachShader(ProgramID, FragmentShaderID);
-		glLinkProgram(ProgramID);
-		glGetProgramiv(ProgramID, GL_LINK_STATUS, &Success);
-		if (!Success)
-		{
-			int32_t lenght;
-			std::string templog;
-			glGetShaderiv(ProgramID, GL_INFO_LOG_LENGTH, &lenght);
-			templog.resize(lenght);
-			glGetShaderInfoLog(ProgramID, lenght, 0, &templog[0]);
-			throw std::runtime_error("airs::Shader error: Shader program linking failed:\n" + templog);
-		}
-
-		glDetachShader(ProgramID, VertexShaderID);
-		if (!gs.empty()) glDetachShader(ProgramID, GeometryShaderID);
-		glDetachShader(ProgramID, FragmentShaderID);
-		glDeleteShader(VertexShaderID);
-		if (!gs.empty()) glDeleteShader(GeometryShaderID);
-		glDeleteShader(FragmentShaderID);
-	}
-	Shader::~Shader()
-	{
-		if (ProgramID) glDeleteProgram(ProgramID);
-		ProgramID = 0;
+		shader.Load(std::string(std::istreambuf_iterator<char>(is), {}));
+		return is;
 	}
 
 	int32_t Shader::Uniform(const std::string& uniform) const

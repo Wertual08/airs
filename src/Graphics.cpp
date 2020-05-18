@@ -68,18 +68,19 @@ namespace airs
 	}
 	void Graphics::RenderString(vec2i pos, const std::u32string& str, uint32_t color)
 	{
+		vec2i original_pos = pos;
 		Vertex v;
 		for (char32_t c : str)
 		{
 			switch (c)
 			{
 			case '\r':
-				pos.x = 0;
+				pos.x = original_pos.x;
 				v = { 0, 0, GfxUnit::Empty, 0, 0 };
 				SelectedBuffer.FastSubData(Cursor++ * sizeof(Vertex), sizeof(Vertex), &v);
 				break;
 			case '\n':
-				pos.x = 0;
+				pos.x = original_pos.x;
 				pos.y -= Chars.Height();
 				v = { 0, 0, GfxUnit::Empty, 0, 0 };
 				SelectedBuffer.FastSubData(Cursor++ * sizeof(Vertex), sizeof(Vertex), &v);
@@ -99,6 +100,7 @@ namespace airs
 	}
 	vec2i Graphics::RenderString(vec2i pos, uint32_t curs, const std::u32string& str, uint32_t color)
 	{
+		vec2i original_pos = pos;
 		vec2i res = { pos.x, pos.y };
 		Vertex v;
 		for (char32_t c : str)
@@ -106,12 +108,12 @@ namespace airs
 			switch (c)
 			{
 			case '\r':
-				pos.x = 0;
+				pos.x = original_pos.x;
 				v = { 0, 0, GfxUnit::Empty, 0, 0 };
 				SelectedBuffer.FastSubData(Cursor++ * sizeof(Vertex), sizeof(Vertex), &v);
 				break;
 			case '\n':
-				pos.x = 0;
+				pos.x = original_pos.x;
 				pos.y -= Chars.Height();
 				v = { 0, 0, GfxUnit::Empty, 0, 0 };
 				SelectedBuffer.FastSubData(Cursor++ * sizeof(Vertex), sizeof(Vertex), &v);
