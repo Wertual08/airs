@@ -1,5 +1,5 @@
 #pragma once
-#include "Shader.h"
+#include "Program.h"
 
 
 
@@ -41,9 +41,9 @@ namespace airs
 		static void Init();
 		static void Dispose();
 		static bool IsInitialized();
-		static Shader& TextShader();
+		static Program& TextShader();
 		static int32_t TextCameraUID();
-		static Shader& GUIShader();
+		static Program& GUIShader();
 		static int32_t GUIResolutionUID();
 		static int32_t GUIOffsetUID();
 		static int32_t GUITimeUID();

@@ -62,7 +62,7 @@ namespace airs
 		std::shuffle(Permutation.begin(), Permutation.end(), std::mt19937(seed));
 		std::memcpy(Permutation.data() + 256, Permutation.data(), 256);
 	}
-	double noise::operator()(double x, double y, double z)
+	double noise::operator()(double x, double y, double z) const
 	{
 		int32_t X = (int32_t)floor(x) & 255;
 		int32_t Y = (int32_t)floor(y) & 255;
@@ -100,7 +100,7 @@ namespace airs
 					grad(Permutation[BB + 1], x - 1, y - 1, z - 1)))
 		) + 1.0) / 2.0;
 	}
-	double noise::operator()(vec3d vec)
+	double noise::operator()(vec3d vec) const
 	{
 		int32_t X = (int32_t)floor(vec.x) & 255;
 		int32_t Y = (int32_t)floor(vec.y) & 255;

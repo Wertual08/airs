@@ -100,7 +100,7 @@ namespace airs
 
 	void GUIWindow::Render() const
 	{
-		static Shader& GUIShader = GraphicsInitializer::GUIShader();
+		static Program& GUIShader = GraphicsInitializer::GUIShader();
 		static int32_t ResolutionUID = GraphicsInitializer::GUIResolutionUID();
 		static int32_t OffsetUID = GraphicsInitializer::GUIOffsetUID();
 		static int32_t TimeUID = GraphicsInitializer::GUITimeUID();

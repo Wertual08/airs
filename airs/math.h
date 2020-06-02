@@ -651,7 +651,7 @@ namespace airs
 	public:
 		noise();
 		noise(uint32_t seed);
-		double operator()(double x, double y, double z);
-		double operator()(vec3d vec);
+		double operator()(double x, double y, double z) const;
+		double operator()(vec3d vec) const;
 	};
 }

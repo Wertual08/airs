@@ -1,5 +1,5 @@
 #pragma once
-#include "Shader.h"
+#include "Program.h"
 #include "Buffer.h"
 #include "VertexArray.h"
 #include "Spriteset.h"

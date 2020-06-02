@@ -174,15 +174,15 @@ namespace airs
 
 	
 	bool GraphicsInitialized = false;
-	Shader* ResTextShader = nullptr; 
+	Program ResTextShader; 
 	int32_t ResTextCameraUID = -1;
-	Shader* ResGUIShader = nullptr;
+	Program ResGUIShader;
 	int32_t ResGUIResolutionUID = -1;
 	int32_t ResGUIOffsetUID = -1;
 	int32_t ResGUITimeUID = -1;
 	void InitTextShader()
 	{
-		ResTextShader = new Shader(R"{SHADER_SOURCE}(
+		ResTextShader.Link(R"{SHADER_SOURCE}(
 #shader vertex
 #version 330 core
 layout(location = 0) in ivec2 InTexMetrics;
@@ -257,11 +257,11 @@ void main()
 }
 		){SHADER_SOURCE}");
 
-		ResTextCameraUID = ResTextShader->Uniform("Camera");
+		ResTextCameraUID = ResTextShader.Uniform("Camera");
 	}
 	void InitGUIShader() 
 	{
-		ResGUIShader = new Shader(R"{SHADER_SOURCE}(
+		ResGUIShader.Link(R"{SHADER_SOURCE}(
 #shader vertex
 #version 330 core
 
@@ -449,13 +449,13 @@ void main()
 	}
 }
 ){SHADER_SOURCE}");
-		int32_t ind = ResGUIShader->Uniform("TextureBuffer");
-		ResGUIShader->Uniform(ind, 0);
-		ResGUIShader->Uniform(ind + 1, 1);
+		int32_t ind = ResGUIShader.Uniform("TextureBuffer");
+		ResGUIShader.Uniform(ind, 0);
+		ResGUIShader.Uniform(ind + 1, 1);
 
-		ResGUIResolutionUID = ResGUIShader->Uniform("Resolution");
-		ResGUIOffsetUID = ResGUIShader->Uniform("Offset");
-		ResGUITimeUID = ResGUIShader->Uniform("Time");
+		ResGUIResolutionUID = ResGUIShader.Uniform("Resolution");
+		ResGUIOffsetUID = ResGUIShader.Uniform("Offset");
+		ResGUITimeUID = ResGUIShader.Uniform("Time");
 	}
 	void GraphicsInitializer::Init()
 	{
@@ -470,29 +470,26 @@ void main()
 	{
 		if (!GraphicsInitialized) return;
 
-		delete ResTextShader;
-		delete ResGUIShader;
-
 		GraphicsInitialized = false;
 	}
 	bool GraphicsInitializer::IsInitialized()
 	{
 		return GraphicsInitialized;
 	}
-	Shader& GraphicsInitializer::TextShader()
+	Program& GraphicsInitializer::TextShader()
 	{
 		if (!GraphicsInitialized) throw std::runtime_error("airs::GraphicsInitializer error: Graphics is not initialized.");
-		return *ResTextShader;
+		return ResTextShader;
 	}
 	int32_t GraphicsInitializer::TextCameraUID()
 	{
 		if (!GraphicsInitialized) throw std::runtime_error("airs::GraphicsInitializer error: Graphics is not initialized.");
 		return ResTextCameraUID;
 	}
-	Shader& GraphicsInitializer::GUIShader()
+	Program& GraphicsInitializer::GUIShader()
 	{
 		if (!GraphicsInitialized) throw std::runtime_error("airs::GraphicsInitializer error: Graphics is not initialized.");
-		return *ResGUIShader;
+		return ResGUIShader;
 	}
 	int32_t GraphicsInitializer::GUIResolutionUID()
 	{

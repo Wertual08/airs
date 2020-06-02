@@ -4,7 +4,7 @@
 #include <ostream>
 #include "Sprite.h"
 #include "Bitmap.h"
-#include "Shader.h"
+#include "Program.h"
 #include "TextureBuffer.h"
 
 
@@ -14,7 +14,7 @@ namespace airs
 	class Spriteset : private TextureBuffer, private std::vector<Sprite>
 	{
 	private:
-		Shader SpritesShader;
+		Program SpritesShader;
 		int32_t CameraUID, TimeUID;
 		size_t Capacity, Cursor;
 

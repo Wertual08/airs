@@ -160,7 +160,7 @@ namespace airs
 	}
 	void Text::Render()
 	{
-		static Shader& TextShader = GraphicsInitializer::TextShader();
+		static Program& TextShader = GraphicsInitializer::TextShader();
 		static int32_t CameraUID = GraphicsInitializer::TextCameraUID();
 
 		if (RenderData)
