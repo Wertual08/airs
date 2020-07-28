@@ -1,11 +1,10 @@
-#include "airs/Charset.h"
-#include "gl/glew.h"
+#include "airs/Charset.hpp"
 
 
 
 namespace airs
 {
-	Charset::Charset() 
+	/*Charset::Charset() 
 	{
 	}
 
@@ -173,5 +172,5 @@ namespace airs
 	void DynamicCharset::Unbind() const
 	{
 		TextureMap.Unbind();
-	}
+	}*/
 }

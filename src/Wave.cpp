@@ -1,4 +1,4 @@
-#include "airs/Wave.h"
+#include "airs/Wave.hpp"
 #include <fstream>
 
 

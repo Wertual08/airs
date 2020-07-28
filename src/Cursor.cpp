@@ -1,7 +1,6 @@
-#include "airs/Cursor.h"
-#include "airs/Initializer.h"
-#include "airs/Utilities.h"
-#include "AIRSWin.h"
+#include "airs/Cursor.hpp"
+#include "airs/Utilities.hpp"
+#include "AIRSWin.hpp"
 
 
 
@@ -17,11 +16,11 @@ namespace airs
 	}
 	Cursor::Cursor(const std::string& file)
 	{
-		Handle = LoadCursorFromFileW((LPWSTR)to_utf16(file).c_str());
+		Handle = LoadCursorFromFileW(to_wide(file).c_str());
 	}
 	Cursor::Cursor(int x, int y, int w, int h, const void* andm, const void* xorm)
 	{
-		Handle = CreateCursor(static_cast<HINSTANCE>(WindowsInitializer::GetInstance()), x, y, w, h, andm, xorm);
+		Handle = CreateCursor(GetModuleHandleW(nullptr), x, y, w, h, andm, xorm);
 	}
 	Cursor::~Cursor()
 	{

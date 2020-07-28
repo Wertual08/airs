@@ -1,4 +1,4 @@
-#include "airs/Utilities.h"
+#include "airs/Utilities.hpp"
 #include <codecvt>
 #include <istream>
 #include <vector>
@@ -9,23 +9,23 @@ namespace airs
 {
     std::string to_utf8(const std::wstring& s)
     {
-        return std::move(std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t>().to_bytes(s));
+        return std::move(std::wstring_convert<std::codecvt<wchar_t, char, std::mbstate_t>, wchar_t>().to_bytes(s));
     }
     std::string to_utf8(const std::u16string& s)
     {
-        return std::move(std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t>().to_bytes(s));
+        return std::move(std::wstring_convert<std::codecvt<char16_t, char, std::mbstate_t>, char16_t>().to_bytes(s));
     }
     std::string to_utf8(const std::u32string& s)
     {
-        return std::move(std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>().to_bytes(s));
+        return std::move(std::wstring_convert<std::codecvt<char32_t, char, std::mbstate_t>, char32_t>().to_bytes(s));
     }
     std::u16string to_utf16(const std::string& s)
     {
-        return std::move(std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t>().from_bytes(s));
+        return std::move(std::wstring_convert<std::codecvt<char16_t, char, std::mbstate_t>, char16_t>().from_bytes(s));
     }
     std::u16string to_utf16(const std::wstring& s)
     {
-        return std::move(std::u16string(reinterpret_cast<const char16_t*>(s.c_str())));
+        return std::move(to_utf16(to_utf8(s)));
     }
     std::u16string to_utf16(const std::u32string& s)
     {
@@ -33,15 +33,27 @@ namespace airs
     }
     std::u32string to_utf32(const std::string& s)
     {
-        return std::move(std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>().from_bytes(s));
+        return std::move(std::wstring_convert<std::codecvt<char32_t, char, std::mbstate_t>, char32_t>().from_bytes(s));
     }
     std::u32string to_utf32(const std::wstring& s)
     {
-        return std::u32string();
+        return std::move(to_utf32(to_utf8(s)));
     }
     std::u32string to_utf32(const std::u16string& s) 
     {
-        return to_utf32(to_utf8(s));
+        return std::move(to_utf32(to_utf8(s)));
+    }
+    std::wstring to_wide(const std::string& s)
+    {
+        return std::move(std::wstring_convert<std::codecvt<wchar_t, char, std::mbstate_t>, wchar_t>().from_bytes(s));
+    }
+    std::wstring to_wide(const std::u16string& s)
+    {
+        return std::move(to_wide(to_utf8(s)));
+    }
+    std::wstring to_wide(const std::u32string& s)
+    {
+        return std::move(to_wide(to_utf8(s)));
     }
     std::u32string read_with_bom(std::istream& src)
     {
@@ -83,7 +95,7 @@ namespace airs
             }
             size_t count = buffer.length() / 4;
             std::u32string temp = std::u32string(count, 0);
-            for (int i = 0; i < count; ++i) {
+            for (size_t i = 0; i < count; ++i) {
                 temp[i] = static_cast<char32_t>(buffer[i * 4ull + 3] << 0 | buffer[i * 4 + 2] << 8 | buffer[i * 4 + 1] << 16 | buffer[i * 4 + 0] << 24);
             }
             return temp;
@@ -95,7 +107,7 @@ namespace airs
             }
             size_t count = buffer.length() / 4;
             std::u32string temp = std::u32string(count, 0);
-            for (int i = 0; i < count; ++i) {
+            for (size_t i = 0; i < count; ++i) {
                 temp[i] = static_cast<char32_t>(buffer[i * 4 + 0] << 0 | buffer[i * 4 + 1] << 8 | buffer[i * 4 + 2] << 16 | buffer[i * 4 + 3] << 24);
             }
             return temp;
@@ -107,7 +119,7 @@ namespace airs
             }
             size_t count = buffer.length() / 2;
             std::u16string temp = std::u16string(count, 0);
-            for (int i = 0; i < count; ++i) {
+            for (size_t i = 0; i < count; ++i) {
                 temp[i] = static_cast<char16_t>(buffer[i * 2 + 1] << 0 | buffer[i * 2 + 0] << 8);
             }
             return to_utf32(temp);
@@ -119,7 +131,7 @@ namespace airs
             }
             size_t count = buffer.length() / 2;
             std::u16string temp = std::u16string(count, 0);
-            for (int i = 0; i < count; ++i) {
+            for (size_t i = 0; i < count; ++i) {
                 temp[i] = static_cast<char16_t>(buffer[i * 2 + 0] << 0 | buffer[i * 2 + 1] << 8);
             }
             return to_utf32(temp);

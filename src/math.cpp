@@ -1,4 +1,4 @@
-#include "airs/math.h"
+#include "airs/math.hpp"
 #include <algorithm>
 #include <numeric>
 #include <random>
@@ -7,7 +7,6 @@
 
 namespace airs
 {
-	const mat2 mat2::identity{ 1.0f, 0.0f, 0.0f, 1.0f };
 	const mat3 mat3::identity{ 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f };
 	const mat4 mat4::identity{ 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f };
 

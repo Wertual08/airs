@@ -1,5 +1,5 @@
-#include "airs/Timer.h"
-#include "AIRSWin.h"
+#include "airs/Timer.hpp"
+#include "AIRSWin.hpp"
 #include <algorithm>
 #include <chrono>
 
@@ -12,7 +12,7 @@ namespace airs
 
 	Timer::Timer()
 	{
-		QueryPerformanceFrequency((LARGE_INTEGER*)& InvFreqMilli);
+		QueryPerformanceFrequency(reinterpret_cast<LARGE_INTEGER*>(&InvFreqMilli));
 		CurrentCount = 0;
 		StartCount = 0;
 		Stopped = true;
@@ -25,22 +25,22 @@ namespace airs
 	{
 		if (!Stopped) return;
 		Stopped = false;
-		QueryPerformanceCounter((LARGE_INTEGER*)& StartCount);
+		QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&StartCount));
 	}
 	void Timer::Reset()
 	{
-		QueryPerformanceCounter((LARGE_INTEGER*)& StartCount);
+		QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&StartCount));
 		Stopped = false;
 	}
 	void Timer::Stop()
 	{
 		if (Stopped) return;
-		QueryPerformanceCounter((LARGE_INTEGER*)& CurrentCount);
+		QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&CurrentCount));
 		Stopped = true;
 	}
 	double Timer::Elapsed() const
 	{
-		if (!Stopped) QueryPerformanceCounter((LARGE_INTEGER*)& CurrentCount);
+		if (!Stopped) QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&CurrentCount));
 		return (double)(CurrentCount - StartCount) / (double)InvFreqMilli;
 	}
 
@@ -48,8 +48,11 @@ namespace airs
 	FrameTimer::FrameTimer(double sensitivity) :
 		Sensitivity(sensitivity),
 		TimeMin(DBL_MAX),
-		TimeAvg(0.0),
-		TimeMax(DBL_MAX)
+		TimeMax(DBL_MAX),
+		LastBuffer(0.0),
+		LastCount(0.0),
+		TimeBuffer(0.0),
+		FramesCount(0.0)
 	{
 	}
 	FrameTimer::~FrameTimer()
@@ -70,18 +73,31 @@ namespace airs
 		Clocker.Stop();
 		const double FrameTime = Clocker.Elapsed();
 		TimeMin = std::min(TimeMin, FrameTime);
-		TimeAvg += (FrameTime - TimeAvg) * std::min(1.0, FrameTime) * Sensitivity;
 		TimeMax = std::max(TimeMax, FrameTime);
+
+		TimeBuffer += FrameTime;
+		FramesCount += 1.0;
+
+		if (TimeBuffer > Sensitivity)
+		{
+			LastBuffer = TimeBuffer;
+			LastCount = FramesCount;
+			TimeBuffer = 0;
+			FramesCount = 0;
+		}
 	}
 	void FrameTimer::Reset()
 	{
 		TimeMin = DBL_MAX;
-		TimeAvg = 0.0;
 		TimeMax = DBL_MAX;
+		LastBuffer = 0.0;
+		LastCount = 0.0;
+		TimeBuffer = 0.0;
+		FramesCount = 0.0;
 	}
 	double FrameTimer::GetAvg() const
 	{
-		return TimeAvg;
+		return (LastBuffer + TimeBuffer) / (LastCount + FramesCount);
 	}
 	double FrameTimer::GetMin() const
 	{

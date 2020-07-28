@@ -1,7 +1,7 @@
-#include "airs/Font.h"
+#include "airs/Font.hpp"
 #include <stdexcept>
-#include "airs/Utilities.h"
-#include "AIRSWin.h"
+#include "airs/Utilities.hpp"
+#include "AIRSWin.hpp"
 
 
 
@@ -12,31 +12,29 @@ namespace airs
 		return { static_cast<uint16_t>((0xffff + 1.0f) * v), static_cast<int16_t>(v) };
 	}
 
-	Font::Font(const std::string& file, const std::string& font, int32_t size) :
-		Font(file, font, size, 0, 0, FW_DONTCARE, false, false, false, FIXED_PITCH | FF_DONTCARE)
-	{ 
-	}
-	Font::Font(const std::string& font, int32_t size) : Font("", font, size, 0, 0, FW_DONTCARE, false, false, false, FIXED_PITCH | FF_DONTCARE)
+	Font::Font(void* data, size_t lenght, const std::string& font, int32_t size, float escapement, float orientation, int32_t weight, bool italic, bool underline, bool strikeout, uint32_t pitchandfamily)
 	{
-	}
-	Font::Font(const std::string& font) : Font("", font, 0, 0, 0, FW_DONTCARE, false, false, false, FIXED_PITCH | FF_DONTCARE)
-	{
-	}
-	Font::Font(int32_t size) : Font("", "", size, 0, 0, FW_DONTCARE, false, false, false, FIXED_PITCH | FF_DONTCARE)
-	{
-	}
-	Font::Font() : Font("", "", 0, 0, 0, FW_DONTCARE, false, false, false, FIXED_PITCH | FF_DONTCARE)
-	{
+		DWORD num_fonts = 0;
+		HANDLE resource = AddFontMemResourceEx(data, static_cast<DWORD>(lenght), nullptr, &num_fonts);
+		if (!resource) throw std::runtime_error("airs::Font error: Adding font memory resource failed.");
+		HDC FontDC = GetDC(0);
+		SelectObject(FontDC, Handle = CreateFontW(size, 0, static_cast<int32_t>(escapement * 1800.0f / 3.141592f),
+			static_cast<int32_t>(orientation * 1.8f / 3.141592f), weight, italic, underline, strikeout, ANSI_CHARSET,
+			OUT_OUTLINE_PRECIS, CLIP_STROKE_PRECIS, PROOF_QUALITY, pitchandfamily, to_wide(font).c_str()));
+		if (!Handle) throw std::runtime_error("airs::Font error: Font creation failed.");
+		GetTextMetricsW(FontDC, reinterpret_cast<LPTEXTMETRICW>(&FontMetrics));
+		ReleaseDC(0, FontDC);
+		DeleteObject(FontDC);
+		RemoveFontMemResourceEx(resource);
 	}
 	Font::Font(const std::string& file, const std::string& font, int32_t size, float escapement, float orientation, int32_t weight, bool italic, bool underline, bool strikeout, uint32_t pitchandfamily)
 	{
-		if (file.length()) AddFontResourceExW((LPCWSTR)to_utf16(file).c_str(), FR_PRIVATE, 0);
+		if (file.length()) AddFontResourceExW(to_wide(file).c_str(), FR_PRIVATE, 0);
 
 		HDC FontDC = GetDC(0); 
-		int k;
 		SelectObject(FontDC, Handle = CreateFontW(size, 0, static_cast<int32_t>(escapement * 1800.0f / 3.141592f),
 			static_cast<int32_t>(orientation * 1.8f / 3.141592f), weight, italic, underline, strikeout, ANSI_CHARSET,
-			OUT_OUTLINE_PRECIS, CLIP_STROKE_PRECIS, PROOF_QUALITY, pitchandfamily, (LPCWSTR)to_utf16(font).c_str()));
+			OUT_OUTLINE_PRECIS, CLIP_STROKE_PRECIS, PROOF_QUALITY, pitchandfamily, to_wide(font).c_str()));
 		if (!Handle) throw std::runtime_error("airs::Font error: Font creation failed.");
 		GetTextMetricsW(FontDC, reinterpret_cast<LPTEXTMETRICW>(&FontMetrics));
 		ReleaseDC(0, FontDC);
@@ -52,6 +50,22 @@ namespace airs
 	}
 	Font::Font(const std::string& font, int32_t size, int32_t weight, bool italic, bool underline, bool strikeout, uint32_t pitchandfamily) :
 		Font("", font, size, 0, 0, weight, italic, underline, strikeout, pitchandfamily)
+	{
+	}
+	Font::Font(const std::string& file, const std::string& font, int32_t size) :
+		Font(file, font, size, 0, 0, FW_DONTCARE, false, false, false, FIXED_PITCH | FF_DONTCARE)
+	{
+	}
+	Font::Font(const std::string& font, int32_t size) : Font("", font, size, 0, 0, FW_DONTCARE, false, false, false, FIXED_PITCH | FF_DONTCARE)
+	{
+	}
+	Font::Font(const std::string& font) : Font("", font, 0, 0, 0, FW_DONTCARE, false, false, false, FIXED_PITCH | FF_DONTCARE)
+	{
+	}
+	Font::Font(int32_t size) : Font("", "", size, 0, 0, FW_DONTCARE, false, false, false, FIXED_PITCH | FF_DONTCARE)
+	{
+	}
+	Font::Font() : Font("", "", 0, 0, 0, FW_DONTCARE, false, false, false, FIXED_PITCH | FF_DONTCARE)
 	{
 	}
 	Font::Font(Font&& font) noexcept
@@ -158,7 +172,7 @@ namespace airs
 	}
 
 
-	Glyph::Glyph(const Font& font, char32_t char_id, bool gray, mat2 t) noexcept
+	Glyph::Glyph(const Font& font, char32_t char_id, bool gray, mat2f t) noexcept
 	{
 		HDC FontDC = CreateCompatibleDC(0);
 		SelectObject(FontDC, font);
@@ -192,17 +206,17 @@ namespace airs
 
 			if (gray)
 			{
-				uint32_t row = gm.gmBlackBoxX + 3 - (gm.gmBlackBoxX + 3) % 4;
-				for (uint32_t y = 0; y < gm.gmBlackBoxY; y++)
-					for (uint32_t x = 0; x < gm.gmBlackBoxX; x++)
+				size_t row = gm.gmBlackBoxX + 3ull - (gm.gmBlackBoxX + 3ull) % 4ull;
+				for (size_t y = 0; y < gm.gmBlackBoxY; y++)
+					for (size_t x = 0; x < gm.gmBlackBoxX; x++)
 						PixData[sizeof(int32_t) * 2 + y * gm.gmBlackBoxX + x] = 
 						buffer[(gm.gmBlackBoxY - y - 1) * row + x] * 255 / 64;
 			}
 			else
 			{
-				int32_t row = (gm.gmBlackBoxX + 31 - (gm.gmBlackBoxX + 31) % 32) / 8;
-				for (int32_t y = 0; y < gm.gmBlackBoxY; y++)
-					for (int32_t x = 0; x < gm.gmBlackBoxX; x++)
+				size_t row = (gm.gmBlackBoxX + 31 - (gm.gmBlackBoxX + 31) % 32) / 8;
+				for (size_t y = 0; y < gm.gmBlackBoxY; y++)
+					for (size_t x = 0; x < gm.gmBlackBoxX; x++)
 						PixData[sizeof(int32_t) * 2 + y * gm.gmBlackBoxX + x] = 
 						((buffer[x / 8 + row * (gm.gmBlackBoxY - y - 1)] >> (7 - x % 8)) & 1) * 255;
 			}
@@ -295,7 +309,7 @@ namespace airs
 		return PixData.get() + sizeof(int32_t) * 2;
 	}
 
-	int32_t Glyph::Size(const Font& f, char32_t char_id, bool gray, mat2 t)
+	int32_t Glyph::Size(const Font& f, char32_t char_id, bool gray, mat2f t)
 	{
 		HDC FontDC = CreateCompatibleDC(0);
 		SelectObject(FontDC, f);

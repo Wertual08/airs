@@ -1,90 +1,75 @@
-#include "airs/Bitmap.h"
+#include "airs/Bitmap.hpp"
 #include <Windows.h>
 #include <gdiplus.h>
 #include <stdexcept>
+#include "airs/Utilities.hpp"
 
 
 
 namespace airs
 {
-	//inline uint32_t BGRAtoRGBA
-
-	Bitmap::Bitmap(uint32_t w, uint32_t h)
+	class GDIPlusInitializer
 	{
-		Pixels = std::make_unique<uint32_t[]>(static_cast<size_t>(w) * static_cast<size_t>(h) + 2ull);
-		Pixels[0] = w;
-		Pixels[1] = h;
+		ULONG_PTR GDIPlusToken = 0;
+	public:
+		GDIPlusInitializer()
+		{
+			Gdiplus::GdiplusStartupInput StartupInput;
+			Gdiplus::Status result = Gdiplus::GdiplusStartup(&GDIPlusToken, &StartupInput, nullptr);
+			if (result != Gdiplus::Status::Ok) throw std::runtime_error("airs::GDIPlusInitializer error: Can not acquire GDI+ token.");
+		}
+		~GDIPlusInitializer()
+		{
+			Gdiplus::GdiplusShutdown(GDIPlusToken);
+		}
+		ULONG_PTR GetToken()
+		{
+			return GDIPlusToken;
+		}
+	};
+	//inline uint32_t ARGBtoRGBA
+
+	Bitmap::Bitmap(uint32_t w, uint32_t h, void* data) : Surface(w, h, data)
+	{
 	}
-	Bitmap::Bitmap(const std::string& file)
+	Bitmap::Bitmap(uint32_t w, uint32_t h) : Surface(w, h)
 	{
-		wchar_t WideName[512];
-		mbstowcs_s(nullptr, WideName, file.c_str(), _TRUNCATE);
-		Gdiplus::Bitmap bitmap(WideName);
-		if (bitmap.GetLastStatus() != Gdiplus::Status::Ok)
-			throw std::runtime_error(("airs::Bitmap error: Failed to load bitmap from [" + file + "].").c_str());
+	}
+	Bitmap::Bitmap(const std::string& file) : Surface(0, 0)
+	{
+		static GDIPlusInitializer GDIPlusInstance;
 
-		Pixels = std::make_unique<uint32_t[]>(static_cast<size_t>(bitmap.GetWidth()) * static_cast<size_t>(bitmap.GetHeight()) + 2ull);
-		Pixels[0] = bitmap.GetWidth();
-		Pixels[1] = bitmap.GetHeight();
+		Gdiplus::Bitmap bitmap(to_wide(file).c_str());
+		if (bitmap.GetLastStatus() != Gdiplus::Status::Ok)
+			throw std::runtime_error("airs::Bitmap error: Failed to load bitmap from [" + file + "].");
+
+		BitmapW = bitmap.GetWidth();
+		BitmapH = bitmap.GetHeight();
+		Pixels = new uint32_t[static_cast<size_t>(BitmapW) * static_cast<size_t>(BitmapH)];
 
 		Gdiplus::BitmapData data;
-		bitmap.LockBits(&Gdiplus::Rect(0, 0, bitmap.GetWidth(), bitmap.GetHeight()),
-			Gdiplus::ImageLockMode::ImageLockModeRead,
+		Gdiplus::Rect rect(0, 0, BitmapW, BitmapH);
+		bitmap.LockBits(&rect, Gdiplus::ImageLockMode::ImageLockModeRead,
 			PixelFormat32bppARGB, &data); 
 		uint32_t* udata = static_cast<uint32_t*>(data.Scan0);
-		for (size_t y = 0; y < bitmap.GetHeight(); y++)
+		for (size_t y = 0; y < static_cast<size_t>(BitmapH); y++)
 		{
-			for (size_t x = 0; x < bitmap.GetWidth(); x++)
+			for (size_t x = 0; x < static_cast<size_t>(BitmapW); x++)
 			{
-				uint32_t p = udata[(bitmap.GetHeight() - 1 - y) * bitmap.GetWidth() + x];
-				Pixels[y * bitmap.GetWidth() + x + 2ull] = (p << 8) | (p >> 24);
+				uint32_t p = udata[(BitmapH - 1ull - y) * BitmapW + x];
+				Pixels[y * BitmapW + x] = static_cast<uint32_t>((p << 8) | (p >> 24));
 			}
 		}
-		//memcpy(Pixels.get(), data.Scan0, sizeof(uint32_t) * ImgWidth * ImgHeight);
 		bitmap.UnlockBits(&data);
 	}
-	Bitmap::Bitmap(const Bitmap& b)
+	Bitmap::Bitmap(const Bitmap& b) noexcept : Surface(b)
 	{
-		Pixels = std::make_unique<uint32_t[]>(static_cast<size_t>(b.Pixels[0]) * static_cast<size_t>(b.Pixels[1]) + 2ull);
-		memcpy(Pixels.get(), b.Pixels.get(), sizeof(uint32_t) * (static_cast<size_t>(b.Pixels[0]) * static_cast<size_t>(b.Pixels[1]) + 2ull));
+	}
+	Bitmap::Bitmap(Bitmap&& b) noexcept : Surface(std::move(b))
+	{
 	}
 	Bitmap& Bitmap::operator=(const Bitmap& b)
 	{
-		Pixels = std::make_unique<uint32_t[]>(static_cast<size_t>(b.Pixels[0]) * static_cast<size_t>(b.Pixels[1]) + 2ull);
-		memcpy(Pixels.get(), b.Pixels.get(), sizeof(uint32_t) * (static_cast<size_t>(b.Pixels[0]) * static_cast<size_t>(b.Pixels[1]) + 2ull));
-		return *this;
-	}
-	Bitmap::~Bitmap()
-	{
-	}
-
-	uint32_t Bitmap::Width() const
-	{
-		return Pixels[0];
-	}
-	uint32_t Bitmap::Height() const
-	{
-		return Pixels[1];
-	}
-	size_t Bitmap::Size() const
-	{
-		return static_cast<size_t>(Pixels[0]) * static_cast<size_t>(Pixels[1]);
-	}
-	
-	uint32_t Bitmap::Pixel(uint32_t x, uint32_t y) const
-	{
-		return *(Pixels.get() + 2ull + static_cast<size_t>(y) * static_cast<size_t>(Pixels[0]) + static_cast<size_t>(x));
-	}
-	uint32_t& Bitmap::Pixel(uint32_t x, uint32_t y)
-	{
-		return *(Pixels.get() + 2ull + static_cast<size_t>(y) * static_cast<size_t>(Pixels[0]) + static_cast<size_t>(x));
-	}
-	Bitmap::operator const uint32_t* () const
-	{
-		return Pixels.get() + 2ull;
-	}
-	Bitmap::operator uint32_t* ()
-	{
-		return Pixels.get() + 2ull;
+		return static_cast<Bitmap&>(Surface::operator=(b));
 	}
 }

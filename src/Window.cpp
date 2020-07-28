@@ -1,13 +1,65 @@
-#include "airs/Window.h"
-#include "airs/Initializer.h"
-#include "airs/Utilities.h"
-#include "AIRSWin.h"
+#include "airs/Window.hpp"
+#include "airs/Utilities.hpp"
+#include <Windows.h>
+#include <stdexcept>
 
 
 
 namespace airs
 {
-	std::exception_ptr CurrentWindowException = nullptr;
+	class WindowsInitializer
+	{
+	private:
+		static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+		{
+			return static_cast<LRESULT>(reinterpret_cast<Window*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA))->
+				OnMessage(hwnd, static_cast<uint32_t>(msg), static_cast<uint64_t>(wparam), static_cast<int64_t>(lparam)));
+		}
+		static LRESULT CALLBACK Startup(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+		{
+			if (msg == WM_NCCREATE)
+			{
+				Window* p = reinterpret_cast<Window*>(reinterpret_cast<LPCREATESTRUCT>(lparam)->lpCreateParams);
+				if (p != nullptr)
+				{
+					SetWindowLongPtrW(static_cast<HWND>(hwnd), GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&WndProc));
+					SetWindowLongPtrW(static_cast<HWND>(hwnd), GWLP_USERDATA, reinterpret_cast<LONG_PTR>(p));
+					return static_cast<LRESULT>(p->OnMessage(hwnd, static_cast<uint32_t>(msg), static_cast<uint64_t>(wparam), static_cast<int64_t>(lparam)));
+				}
+			}
+			return DefWindowProcW(static_cast<HWND>(hwnd), msg, wparam, lparam);
+		}
+
+		static constexpr LPCWSTR Name = L"AIRS_Framework_Window";
+		ATOM Atom;
+
+	public:
+		constexpr LPCWSTR GetName() { return Name; }
+		ATOM GetAtom() { return Atom; }
+
+		WindowsInitializer()
+		{
+			WNDCLASSEXW wc = { 0 };
+			wc.cbSize = sizeof(wc);
+			wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+			wc.lpfnWndProc = &Startup;
+			wc.cbClsExtra = 0;
+			wc.cbWndExtra = 0;
+			wc.hInstance = GetModuleHandleW(nullptr);
+			wc.hIcon = nullptr;
+			wc.hCursor = LoadCursorW(NULL, IDC_ARROW);
+			wc.hbrBackground = CreateSolidBrush(0);
+			wc.lpszMenuName = nullptr;
+			wc.lpszClassName = Name;
+			wc.hIconSm = nullptr;
+			if ((Atom = RegisterClassExW(&wc)) == 0) throw std::runtime_error("airs::WindowsInitializer error: Can not register window class.");
+		}
+		~WindowsInitializer()
+		{
+			UnregisterClassW(Name, GetModuleHandleW(nullptr));
+		}
+	};
+
 
 	Window::UserInput::UserInput()
 	{
@@ -116,6 +168,13 @@ namespace airs
 		DeltaY = 0.0f;
 		return temp;
 	}
+	vec2f Window::UserInput::MouseDelta()
+	{
+		vec2f delta(DeltaX, DeltaY);
+		DeltaX = 0.0f;
+		DeltaY = 0.0f;
+		return delta;
+	}
 	char32_t Window::UserInput::GetChar()
 	{
 		if (RingReader == RingWriter) return 0;
@@ -132,6 +191,7 @@ namespace airs
 		{
 			switch (msg)
 			{
+			case WM_PAINT: OnPaint(); break;
 			case WM_NCCREATE: WindowHandle = hwnd; break;
 			case WM_NCCALCSIZE: break;
 			case WM_CREATE: break;
@@ -158,12 +218,12 @@ namespace airs
 				const POINTS pt = MAKEPOINTS(lparam);
 				OnMouseDown(pt.x, Size.y - 1 - pt.y, key::LButton);
 				OnKeyDown(key::LButton);
-			} break; 
+			} break;
 			case WM_MBUTTONDOWN: {
 				const POINTS pt = MAKEPOINTS(lparam);
 				OnMouseDown(pt.x, Size.y - 1 - pt.y, key::MButton);
 				OnKeyDown(key::MButton);
-			} break; 
+			} break;
 			case WM_RBUTTONDOWN: {
 				const POINTS pt = MAKEPOINTS(lparam);
 				OnMouseDown(pt.x, Size.y - 1 - pt.y, key::RButton);
@@ -193,12 +253,12 @@ namespace airs
 				const POINTS pt = MAKEPOINTS(lparam);
 				OnMouseUp(pt.x, Size.y - 1 - pt.y, key::MButton);
 				OnKeyUp(key::MButton);
-			} break; 
+			} break;
 			case WM_RBUTTONUP: {
 				const POINTS pt = MAKEPOINTS(lparam);
 				OnMouseUp(pt.x, Size.y - 1 - pt.y, key::RButton);
 				OnKeyUp(key::RButton);
-			} break; 
+			} break;
 			case WM_XBUTTONUP: {
 				const POINTS pt = MAKEPOINTS(lparam);
 				if (GET_XBUTTON_WPARAM(wparam) == 1)
@@ -211,10 +271,10 @@ namespace airs
 					OnMouseUp(pt.x, Size.y - 1 - pt.y, key::XButton2);
 					OnKeyUp(key::XButton2);
 				}
-			} break; 
+			} break;
 			case WM_SYSKEYUP: OnKeyUp(static_cast<key>(wparam)); return 0; break;
 			case WM_KEYUP: OnKeyUp(static_cast<key>(wparam)); break;
-				   
+
 			case WM_MOUSEWHEEL: OnMouseWheel((float)GET_WHEEL_DELTA_WPARAM(wparam) / (float)WheelDelta); break;
 			case WM_MOUSEHWHEEL: OnMouseWheel((float)GET_WHEEL_DELTA_WPARAM(wparam) / (float)WheelDelta); break;
 			case WM_MOUSEMOVE: {
@@ -227,6 +287,9 @@ namespace airs
 			case WM_SYSCHAR: OnChar(static_cast<char32_t>(wparam)); return 0; break;
 			case WM_UNICHAR: OnUniChar(static_cast<char32_t>(wparam)); break;
 
+			case WM_ENTERSIZEMOVE: OnEnterInternalLoop(); break;
+			case WM_EXITSIZEMOVE: OnExitInternalLoop(); break;
+
 			default: break;
 			}
 		}
@@ -234,7 +297,7 @@ namespace airs
 		{
 			CurrentWindowException = std::current_exception();
 		}
-		return DefWindowProcW(static_cast<HWND>(hwnd), static_cast<UINT>(msg), wparam, lparam);
+		return DefWindowProcW(static_cast<HWND>(hwnd), static_cast<UINT>(msg), static_cast<WPARAM>(wparam), static_cast<LPARAM>(lparam));
 	}
 
 	inline bool Window::OnClose()
@@ -244,6 +307,10 @@ namespace airs
 	inline void Window::OnResize(int32_t w, int32_t h)
 	{
 		if (Resize) Resize(w, h);
+	}
+	inline void Window::OnPaint()
+	{
+		if (Paint) Paint();
 	}
 	inline void Window::OnKillFocus()
 	{
@@ -296,45 +363,65 @@ namespace airs
 		if (UniChar) UniChar(c);
 	}
 
-	Window::Window(const std::string& title, int32_t w, int32_t h, int32_t x, int32_t y, Style s, StyleEx sx) :
-		Size{ 0 }, CursorHandle{ 0 }, WindowHandle{ 0 }, WindowPlace{ new WINDOWPLACEMENT }
+	inline void Window::OnEnterInternalLoop()
 	{
+		if (EnterInternalLoop) EnterInternalLoop();
+	}
+	inline void Window::OnExitInternalLoop()
+	{
+		if (ExitInternalLoop) ExitInternalLoop();
+	}
+
+	Window::Window() : Fullscreen(false), CurrentWindowException(nullptr), WindowStyle(0), 
+		WindowStyleEx(0), Size(0), CursorHandle(nullptr), WindowHandle(nullptr)
+	{
+	}
+	void Window::Init(const std::string& title, int32_t w, int32_t h, int32_t x, int32_t y, Style s, StyleEx sx)
+	{
+		static WindowsInitializer WindowsInstance;
+
+		Fullscreen = false;
 		WindowStyle = static_cast<DWORD>(s);
 		WindowStyleEx = static_cast<DWORD>(sx);
 
-		LPCWSTR cl = WindowsInitializer::GetName();
-		HINSTANCE inst = static_cast<HINSTANCE>(WindowsInitializer::GetInstance());
 		RECT wr = { 0, 0, w, h };
 		AdjustWindowRectEx(&wr, WindowStyle, false, WindowStyleEx);
 		w = wr.right - wr.left;
 		h = wr.bottom - wr.top;
 
-		if (!(WindowHandle = CreateWindowExW(WindowStyleEx, cl, (LPWSTR)to_utf16(title).c_str(), 
-			WindowStyle, x, y, w, h, nullptr, nullptr, inst, this)))
-			throw std::runtime_error("airs::Window error: Window creation failed.");
+		WindowHandle = CreateWindowExW(WindowStyleEx, WindowsInstance.GetName(), to_wide(title).c_str(),
+			WindowStyle, x, y, w, h, nullptr, nullptr, GetModuleHandleW(nullptr), this);
+		if (!WindowHandle) throw std::runtime_error("airs::Window error: Window creation failed.");
+	}
+
+	Window::Window(const std::string& title, int32_t w, int32_t h, int32_t x, int32_t y, Style s, StyleEx sx) :
+		Fullscreen(false), CurrentWindowException(nullptr), WindowStyle(static_cast<DWORD>(s)), WindowStyleEx(static_cast<DWORD>(sx)),
+		Size(0), CursorHandle(nullptr), WindowHandle(nullptr)
+	{
+		Init(title, w, h, x, y, s, sx);
 	}
 	Window::~Window()
 	{
 		if (WindowHandle) DestroyWindow(static_cast<HWND>(WindowHandle));
-		delete WindowPlace;
+		WindowHandle = nullptr;
 	}
 	void Window::SetTitle(const std::string& title)
 	{
-		SetWindowTextW(static_cast<HWND>(WindowHandle), (LPWSTR)to_utf16(title).c_str());
+		SetWindowTextW(static_cast<HWND>(WindowHandle), to_wide(title).c_str());
 	}
 	void Window::SetCursor(const Cursor& c)
 	{
 		if (CursorHandle == c.Handle) return;
 		CursorHandle = c.Handle;
-		PostMessage(static_cast<HWND>(WindowHandle), WM_SETCURSOR, 0, 1);
+		PostMessageW(static_cast<HWND>(WindowHandle), WM_SETCURSOR, 0, 1);
 	}
 	void Window::SetFullscreen(bool f)
 	{
 		if (f == Fullscreen) return;
 
-		if (f) 
+		if (f)
 		{
-			GetWindowPlacement(static_cast<HWND>(WindowHandle), (PWINDOWPLACEMENT)WindowPlace);
+			GetWindowPlacement(static_cast<HWND>(WindowHandle), reinterpret_cast<PWINDOWPLACEMENT>(&WindowPlace));
 
 			LONG NewStyle = WindowStyle;
 			NewStyle &= ~WS_BORDER;
@@ -348,12 +435,12 @@ namespace airs
 			SetWindowLongW(static_cast<HWND>(WindowHandle), GWL_EXSTYLE, NewStyleEx | WS_EX_TOPMOST);
 			ShowWindow(static_cast<HWND>(WindowHandle), SW_SHOWMAXIMIZED);
 		}
-		else 
+		else
 		{
 			SetWindowLongW(static_cast<HWND>(WindowHandle), GWL_STYLE, WindowStyle);
 			SetWindowLongW(static_cast<HWND>(WindowHandle), GWL_EXSTYLE, WindowStyleEx);
 			ShowWindow(static_cast<HWND>(WindowHandle), SW_SHOWNORMAL);
-			SetWindowPlacement(static_cast<HWND>(WindowHandle), (PWINDOWPLACEMENT)WindowPlace);
+			SetWindowPlacement(static_cast<HWND>(WindowHandle), reinterpret_cast<PWINDOWPLACEMENT>(&WindowPlace));
 		}
 
 		Fullscreen = f;
@@ -370,14 +457,25 @@ namespace airs
 	{
 		return Size;
 	}
+
 	void Window::Show(Appear ws)
 	{
 		ShowWindow(static_cast<HWND>(WindowHandle), static_cast<int>(ws));
 	}
 	void Window::Close()
 	{
-		DestroyWindow(static_cast<HWND>(WindowHandle)); 
+		DestroyWindow(static_cast<HWND>(WindowHandle));
 		WindowHandle = nullptr;
+	}
+
+	void Window::CheckException()
+	{
+		if (CurrentWindowException)
+		{
+			auto t = CurrentWindowException;
+			CurrentWindowException = nullptr;
+			std::rethrow_exception(t);
+		}
 	}
 	void Window::ProcessMessages()
 	{
@@ -394,19 +492,70 @@ namespace airs
 			}
 		}
 	}
-	void Window::PrecessThreadMessages()
+	void Window::ProcessThreadMessages()
 	{
 		MSG msg;
 		while (PeekMessageW(&msg, (HWND)(-1), 0, 0, PM_REMOVE))
 		{
 			TranslateMessage(&msg);
 			DispatchMessageW(&msg);
-			if (CurrentWindowException)
-			{
-				auto t = CurrentWindowException;
-				CurrentWindowException = nullptr;
-				std::rethrow_exception(t);
-			}
 		}
+	}
+
+	void Window::Draw(int32_t x, int32_t y, const Surface& s)
+	{
+		uint32_t* buffer;
+
+		BITMAPINFO bmi;
+		memset(&bmi, 0, sizeof(bmi));
+		bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+		bmi.bmiHeader.biWidth = s.Width();
+		bmi.bmiHeader.biHeight = s.Height();
+		bmi.bmiHeader.biPlanes = 1;
+		bmi.bmiHeader.biBitCount = 32;
+		bmi.bmiHeader.biCompression = BI_RGB;
+		bmi.bmiHeader.biClrUsed = 1;
+
+		HDC hWndDc = GetDC(static_cast<HWND>(WindowHandle));
+		if (!hWndDc) throw std::runtime_error("airs::Window::Draw error: Can not create device context");
+		HBITMAP hDib = CreateDIBSection(hWndDc, &bmi, DIB_RGB_COLORS, reinterpret_cast<void**>(&buffer), 0, 0);
+		if (buffer == NULL) throw std::runtime_error("airs::Window::Draw error: Can not create DIBSection.");
+
+		size_t size = s.Size();
+		const uint32_t* src = static_cast<const uint32_t*>(s);
+		while (size--)
+		{
+			*buffer = (*src << 24) | (*src >> 8);
+			src++;
+			buffer++;
+		}
+
+		HDC hDibDC = CreateCompatibleDC(hWndDc);
+		HGDIOBJ hOldObj = SelectObject(hDibDC, hDib);
+
+		BitBlt(hWndDc, x, Size.y - 1 - y - s.Height(), s.Width(), s.Height(), hDibDC, 0, 0, SRCCOPY);
+
+		SelectObject(hDibDC, hOldObj);
+		DeleteDC(hDibDC);
+
+		DeleteObject(hDib);
+
+		ReleaseDC(static_cast<HWND>(WindowHandle), hWndDc);
+	}
+	void Window::DrawRect(int32_t x, int32_t y, int32_t w, int32_t h, uint32_t color)
+	{
+		HDC hWndDc = GetDC(static_cast<HWND>(WindowHandle));
+		RECT rect;
+		rect.left = x;
+		rect.top = Size.y - 1 - y - h;
+		rect.right = x + w;
+		rect.bottom = Size.y - 1 - y;
+		FillRect(hWndDc, &rect, CreateSolidBrush((color << 24) | (color >> 8)));
+		ReleaseDC(static_cast<HWND>(WindowHandle), hWndDc);
+	}
+
+	void* Window::Handle() const
+	{
+		return WindowHandle;
 	}
 }
