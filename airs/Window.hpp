@@ -174,14 +174,14 @@ namespace airs
 		vec2i Size;
 		
 		inline virtual bool OnClose();
-		inline virtual void OnResize(int32_t w, int32_t h);
+		inline virtual void OnResize(std::int32_t w, std::int32_t h);
 		inline virtual void OnPaint();
 		inline virtual void OnKillFocus();
-		inline virtual void OnMouseDown(int32_t x, int32_t y, key k);
-		inline virtual void OnMouseMove(int32_t x, int32_t y);
-		inline virtual void OnMouseUp(int32_t x, int32_t y, key k);
-		inline virtual void OnMouseWheel(float d);
-		inline virtual void OnMouseHWheel(float d);
+		inline virtual void OnMouseDown(std::int32_t x, std::int32_t y, key k);
+		inline virtual void OnMouseUp(std::int32_t x, int32_t y, key k);
+		inline virtual void OnMouseWheel(std::int32_t x, std::int32_t y, float d);
+		inline virtual void OnMouseHWheel(std::int32_t x, std::int32_t y, float d);
+		inline virtual void OnMouseMove(std::int32_t x, std::int32_t y);
 		inline virtual void OnMouseLeave();
 		inline virtual void OnKeyDown(key k);
 		inline virtual void OnKeyUp(key k);
@@ -223,11 +223,11 @@ namespace airs
 		delegate<void()> Paint;
 		delegate<void()> KillFocus;
 
-		delegate<void(int32_t, int32_t, key)> MouseDown;
-		delegate<void(int32_t, int32_t)> MouseMove;
-		delegate<void(int32_t, int32_t, key)> MouseUp;
-		delegate<void(float)> MouseWheel;
-		delegate<void(float)> MouseHWheel;
+		delegate<void(std::int32_t, std::int32_t, key)> MouseDown;
+		delegate<void(std::int32_t, std::int32_t, key)> MouseUp;
+		delegate<void(std::int32_t, std::int32_t, float)> MouseWheel;
+		delegate<void(std::int32_t, std::int32_t, float)> MouseHWheel;
+		delegate<void(std::int32_t, std::int32_t)> MouseMove;
 		delegate<void()> MouseLeave;
 		delegate<void(key)> KeyDown;
 		delegate<void(key)> KeyUp;

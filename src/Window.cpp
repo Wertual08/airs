@@ -1,7 +1,8 @@
 #include "airs/Window.hpp"
 #include "airs/Utilities.hpp"
-#include <Windows.h>
 #include <stdexcept>
+#include <Windows.h>
+#include <Windowsx.h>
 
 
 
@@ -275,12 +276,21 @@ namespace airs
 			case WM_SYSKEYUP: OnKeyUp(static_cast<key>(wparam)); return 0; break;
 			case WM_KEYUP: OnKeyUp(static_cast<key>(wparam)); break;
 
-			case WM_MOUSEWHEEL: OnMouseWheel((float)GET_WHEEL_DELTA_WPARAM(wparam) / (float)WheelDelta); break;
-			case WM_MOUSEHWHEEL: OnMouseWheel((float)GET_WHEEL_DELTA_WPARAM(wparam) / (float)WheelDelta); break;
-			case WM_MOUSEMOVE: {
-				const POINTS pt = MAKEPOINTS(lparam);
-				OnMouseMove(pt.x, Size.y - 1 - pt.y);
+			case WM_MOUSEWHEEL: {
+				POINT pt;
+				pt.x = GET_X_LPARAM(lparam);
+				pt.x = GET_Y_LPARAM(lparam);
+				ScreenToClient(static_cast<HWND>(WindowHandle), &pt);
+				OnMouseWheel(pt.x, Size.y - 1 - pt.y, (float)GET_WHEEL_DELTA_WPARAM(wparam) / (float)WheelDelta); 
 			} break;
+			case WM_MOUSEHWHEEL: {
+				POINT pt;
+				pt.x = GET_X_LPARAM(lparam);
+				pt.x = GET_Y_LPARAM(lparam);
+				ScreenToClient(static_cast<HWND>(WindowHandle), &pt);
+				OnMouseWheel(pt.x, Size.y - 1 - pt.y, (float)GET_WHEEL_DELTA_WPARAM(wparam) / (float)WheelDelta);
+			} break;
+			case WM_MOUSEMOVE: OnMouseMove(GET_X_LPARAM(lparam), Size.y - 1 - GET_Y_LPARAM(lparam)); break;
 			case WM_MOUSELEAVE: OnMouseLeave(); break;
 
 			case WM_CHAR: OnChar(static_cast<char32_t>(wparam)); if (wparam == '\r') OnChar('\n'); break;
@@ -321,23 +331,23 @@ namespace airs
 	{
 		if (MouseDown) MouseDown(x, y, k);
 	}
-	inline void Window::OnMouseMove(int32_t x, int32_t y)
-	{
-		Input.OnMouseMove(x - Size.x / 2.0f, y - Size.y / 2.0f);
-		if (MouseMove) MouseMove(x, y);
-	}
 	inline void Window::OnMouseUp(int32_t x, int32_t y, key k)
 	{
 		if (MouseUp) MouseUp(x, y, k);
 	}
-	inline void Window::OnMouseWheel(float d)
+	inline void Window::OnMouseWheel(std::int32_t x, std::int32_t y, float d)
 	{
 		Input.OnMouseWheel(d);
-		if (MouseWheel) MouseWheel(d);
+		if (MouseWheel) MouseWheel(x, y, d);
 	}
-	inline void Window::OnMouseHWheel(float d)
+	inline void Window::OnMouseHWheel(std::int32_t x, std::int32_t y, float d)
 	{
-		if (MouseHWheel) MouseHWheel(d);
+		if (MouseHWheel) MouseHWheel(x, y, d);
+	}
+	inline void Window::OnMouseMove(std::int32_t x, std::int32_t y)
+	{
+		Input.OnMouseMove(x - Size.x / 2.0f, y - Size.y / 2.0f);
+		if (MouseMove) MouseMove(x, y);
 	}
 	inline void Window::OnMouseLeave()
 	{

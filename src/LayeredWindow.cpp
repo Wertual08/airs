@@ -30,17 +30,17 @@ namespace airs
 		while (i--) if (Layers[i]->OnMouseUp(x, y, k)) return;
 		Window::OnMouseUp(x, y, k);
 	}
-	void LayeredWindow::OnMouseWheel(float d)
+	void LayeredWindow::OnMouseWheel(int32_t x, int32_t y, float d)
 	{
 		size_t i = Layers.size();
 		while (i--) if (Layers[i]->OnMouseWheel(d)) return;
-		Window::OnMouseWheel(d);
+		Window::OnMouseWheel(x, y, d);
 	}
-	void LayeredWindow::OnMouseHWheel(float d)
+	void LayeredWindow::OnMouseHWheel(int32_t x, int32_t y, float d)
 	{
 		size_t i = Layers.size();
 		while (i--) if (Layers[i]->OnMouseHWheel(d)) return;
-		Window::OnMouseHWheel(d);
+		Window::OnMouseHWheel(x, y, d);
 	}
 	void LayeredWindow::OnKeyDown(key k)
 	{
@@ -65,11 +65,6 @@ namespace airs
 		size_t i = Layers.size();
 		while (i--) if (Layers[i]->OnUniChar(c)) return;
 		Window::OnUniChar(c);
-	}
-
-	LayeredWindow::LayeredWindow(const std::string& title, int32_t w, int32_t h, int32_t x, int32_t y, Style s, StyleEx sx) : 
-		Window(title, w, h, x, y, s, sx)
-	{
 	}
 
 	bool LayeredWindow::AddLayer(Layer& layer)

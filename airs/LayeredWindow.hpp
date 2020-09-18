@@ -19,15 +19,15 @@ namespace airs
 		virtual void OnMouseDown(int32_t x, int32_t y, key k) override;
 		virtual void OnMouseMove(int32_t x, int32_t y) override;
 		virtual void OnMouseUp(int32_t x, int32_t y, key k) override;
-		virtual void OnMouseWheel(float d) override;
-		virtual void OnMouseHWheel(float d) override;
+		virtual void OnMouseWheel(int32_t x, int32_t y, float d) override;
+		virtual void OnMouseHWheel(int32_t x, int32_t y, float d) override;
 		virtual void OnKeyDown(key k) override;
 		virtual void OnKeyUp(key k) override;
 		virtual void OnChar(char32_t c) override;
 		virtual void OnUniChar(char32_t c) override;
 
 	public:
-		LayeredWindow(const std::string& title, int32_t w, int32_t h, int32_t x = UseDefault, int32_t y = UseDefault, Style s = Style::Default, StyleEx sx = StyleEx::Default);
+		using Window::Window;
 
 		bool AddLayer(Layer& layer);
 	};

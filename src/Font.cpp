@@ -7,10 +7,87 @@
 
 namespace airs
 {
-	FIXED fl2fx(float v)
+	inline FIXED fl2fx(float v)
 	{
 		return { static_cast<uint16_t>((0xffff + 1.0f) * v), static_cast<int16_t>(v) };
 	}
+	
+	
+	Glyph::Glyph(std::unique_ptr<uint8_t[]>& data, const Metrics& dimensions) :
+		PixData(std::move(data)), Dimensions(dimensions)
+	{
+	}
+	Glyph::Glyph(Glyph&& g) noexcept
+	{
+		std::swap(Dimensions.OriginX, g.Dimensions.OriginX);
+		std::swap(Dimensions.OriginY, g.Dimensions.OriginY);
+		std::swap(Dimensions.PosIncX, g.Dimensions.PosIncX);
+		std::swap(Dimensions.PosIncY, g.Dimensions.PosIncY);
+		PixData.swap(g.PixData);
+	}
+	Glyph& Glyph::operator=(Glyph&& g) noexcept
+	{
+		std::swap(Dimensions.OriginX, g.Dimensions.OriginX);
+		std::swap(Dimensions.OriginY, g.Dimensions.OriginY);
+		std::swap(Dimensions.PosIncX, g.Dimensions.PosIncX);
+		std::swap(Dimensions.PosIncY, g.Dimensions.PosIncY);
+		PixData.swap(g.PixData);
+		return *this;
+	}
+	Glyph::Glyph(const Glyph& g)
+	{
+		Dimensions = g.Dimensions;
+		PixData = std::make_unique<uint8_t[]>(sizeof(uint8_t) * ((int32_t*)(g.PixData.get()))[0] * ((int32_t*)(g.PixData.get()))[1] + 2 * sizeof(int32_t));
+		memcpy(PixData.get(), g.PixData.get(), sizeof(uint8_t) * ((int32_t*)(g.PixData.get()))[0] * ((int32_t*)(g.PixData.get()))[1] + 2 * sizeof(int32_t));
+	}
+	Glyph& Glyph::operator=(const Glyph& g)
+	{
+		Dimensions = g.Dimensions;
+		PixData = std::make_unique<uint8_t[]>(sizeof(uint8_t) * ((int32_t*)(g.PixData.get()))[0] * ((int32_t*)(g.PixData.get()))[1] + 2 * sizeof(int32_t));
+		memcpy(PixData.get(), g.PixData.get(), sizeof(uint8_t) * ((int32_t*)(g.PixData.get()))[0] * ((int32_t*)(g.PixData.get()))[1] + 2 * sizeof(int32_t));
+		return *this;
+	}
+	Glyph::~Glyph()
+	{
+	}
+
+	int32_t Glyph::Size() const
+	{
+		return Dimensions.BitmapW * Dimensions.BitmapH;
+	}
+	int32_t Glyph::BitmapW() const
+	{
+		return Dimensions.BitmapW;
+	}
+	int32_t Glyph::BitmapH() const
+	{
+		return Dimensions.BitmapH;
+	}
+	int32_t Glyph::OriginX() const
+	{
+		return Dimensions.OriginX;
+	}
+	int32_t Glyph::OriginY() const
+	{
+		return Dimensions.OriginY;
+	}
+	int16_t Glyph::PosIncX() const
+	{
+		return Dimensions.PosIncX;
+	}
+	int16_t Glyph::PosIncY() const
+	{
+		return Dimensions.PosIncY;
+	}
+	Glyph::Metrics Glyph::GetMetrics() const
+	{
+		return Dimensions;
+	}
+	Glyph::operator const uint8_t* () const
+	{
+		return PixData.get() + sizeof(int32_t) * 2;
+	}
+
 
 	Font::Font(void* data, size_t lenght, const std::string& font, int32_t size, float escapement, float orientation, int32_t weight, bool italic, bool underline, bool strikeout, uint32_t pitchandfamily)
 	{
@@ -166,153 +243,10 @@ namespace airs
 		return FontMetrics.CharSet;
 	}
 
-	Font::operator void* () const
-	{
-		return Handle;
-	}
-
-
-	Glyph::Glyph(const Font& font, char32_t char_id, bool gray, mat2f t) noexcept
+	std::int32_t Font::Size(char32_t char_id, bool gray, mat2f t) const
 	{
 		HDC FontDC = CreateCompatibleDC(0);
-		SelectObject(FontDC, font);
-
-		MAT2 Matrix;
-		Matrix.eM11 = fl2fx(t[0][0]);
-		Matrix.eM21 = fl2fx(t[1][0]);
-		Matrix.eM22 = fl2fx(t[1][1]);
-		Matrix.eM12 = fl2fx(t[0][1]);
-
-		uint32_t format = gray ? GGO_GRAY8_BITMAP : GGO_BITMAP;
-		
-		GLYPHMETRICS gm;
-		uint32_t size = GetGlyphOutlineW(FontDC, char_id, format, &gm, 0, 0, &Matrix);
-		if (size != GDI_ERROR)
-		{
-			uint8_t* buffer = new uint8_t[size];
-			GetGlyphOutlineW(FontDC, char_id, format, &gm, size, buffer, &Matrix);
-			gm.gmBlackBoxX *= size > 0;
-			gm.gmBlackBoxY *= size > 0;
-			
-			Dimensions.BitmapW = gm.gmBlackBoxX;
-			Dimensions.BitmapH = gm.gmBlackBoxY;
-			Dimensions.OriginX = gm.gmptGlyphOrigin.x;
-			Dimensions.OriginY = font.Descent() + gm.gmptGlyphOrigin.y - Dimensions.BitmapH;
-			Dimensions.PosIncX = gm.gmCellIncX;
-			Dimensions.PosIncY = gm.gmCellIncY;
-			PixData = std::make_unique<uint8_t[]>(sizeof(uint8_t) * gm.gmBlackBoxX * gm.gmBlackBoxY + sizeof(int32_t) * 2);
-			((int32_t*)(PixData.get()))[0] = gm.gmBlackBoxX;
-			((int32_t*)(PixData.get()))[1] = gm.gmBlackBoxY;
-
-			if (gray)
-			{
-				size_t row = gm.gmBlackBoxX + 3ull - (gm.gmBlackBoxX + 3ull) % 4ull;
-				for (size_t y = 0; y < gm.gmBlackBoxY; y++)
-					for (size_t x = 0; x < gm.gmBlackBoxX; x++)
-						PixData[sizeof(int32_t) * 2 + y * gm.gmBlackBoxX + x] = 
-						buffer[(gm.gmBlackBoxY - y - 1) * row + x] * 255 / 64;
-			}
-			else
-			{
-				size_t row = (gm.gmBlackBoxX + 31 - (gm.gmBlackBoxX + 31) % 32) / 8;
-				for (size_t y = 0; y < gm.gmBlackBoxY; y++)
-					for (size_t x = 0; x < gm.gmBlackBoxX; x++)
-						PixData[sizeof(int32_t) * 2 + y * gm.gmBlackBoxX + x] = 
-						((buffer[x / 8 + row * (gm.gmBlackBoxY - y - 1)] >> (7 - x % 8)) & 1) * 255;
-			}
-
-			delete[] buffer;
-
-			DeleteDC(FontDC);
-		}
-		else
-		{
-			Dimensions.BitmapW = 0;
-			Dimensions.BitmapH = 0;
-			Dimensions.OriginX = 0;
-			Dimensions.OriginY = 0;
-			Dimensions.PosIncX = 0;
-			Dimensions.PosIncY = 0;
-			PixData = std::make_unique<uint8_t[]>(sizeof(int32_t) * 2);
-			((int32_t*)(PixData.get()))[0] = 0;
-			((int32_t*)(PixData.get()))[1] = 0;
-		}
-	}
-	Glyph::Glyph(Glyph&& g) noexcept
-	{
-		std::swap(Dimensions.OriginX, g.Dimensions.OriginX);
-		std::swap(Dimensions.OriginY, g.Dimensions.OriginY);
-		std::swap(Dimensions.PosIncX, g.Dimensions.PosIncX);
-		std::swap(Dimensions.PosIncY, g.Dimensions.PosIncY);
-		PixData.swap(g.PixData);
-	}
-	Glyph& Glyph::operator=(Glyph&& g) noexcept
-	{
-		std::swap(Dimensions.OriginX, g.Dimensions.OriginX);
-		std::swap(Dimensions.OriginY, g.Dimensions.OriginY);
-		std::swap(Dimensions.PosIncX, g.Dimensions.PosIncX);
-		std::swap(Dimensions.PosIncY, g.Dimensions.PosIncY);
-		PixData.swap(g.PixData);
-		return *this;
-	}
-	Glyph::Glyph(const Glyph& g)
-	{
-		Dimensions = g.Dimensions;
-		PixData = std::make_unique<uint8_t[]>(sizeof(uint8_t) * ((int32_t*)(g.PixData.get()))[0] * ((int32_t*)(g.PixData.get()))[1] + 2 * sizeof(int32_t));
-		memcpy(PixData.get(), g.PixData.get(), sizeof(uint8_t) * ((int32_t*)(g.PixData.get()))[0] * ((int32_t*)(g.PixData.get()))[1] + 2 * sizeof(int32_t));
-	}
-	Glyph& Glyph::operator=(const Glyph& g)
-	{
-		Dimensions = g.Dimensions;
-		PixData = std::make_unique<uint8_t[]>(sizeof(uint8_t) * ((int32_t*)(g.PixData.get()))[0] * ((int32_t*)(g.PixData.get()))[1] + 2 * sizeof(int32_t));
-		memcpy(PixData.get(), g.PixData.get(), sizeof(uint8_t) * ((int32_t*)(g.PixData.get()))[0] * ((int32_t*)(g.PixData.get()))[1] + 2 * sizeof(int32_t));
-		return *this;
-	}
-	Glyph::~Glyph()
-	{
-	}
-
-	int32_t Glyph::Size() const
-	{
-		return Dimensions.BitmapW * Dimensions.BitmapH;
-	}
-	int32_t Glyph::BitmapW() const
-	{
-		return Dimensions.BitmapW;
-	}
-	int32_t Glyph::BitmapH() const
-	{
-		return Dimensions.BitmapH;
-	}
-	int32_t Glyph::OriginX() const
-	{
-		return Dimensions.OriginX;
-	}
-	int32_t Glyph::OriginY() const
-	{
-		return Dimensions.OriginY;
-	}
-	int16_t Glyph::PosIncX() const
-	{
-		return Dimensions.PosIncX;
-	}
-	int16_t Glyph::PosIncY() const
-	{
-		return Dimensions.PosIncY;
-	}
-	Glyph::Metrics Glyph::GetMetrics() const
-	{
-		return Dimensions;
-	}
-	Glyph::operator const uint8_t* () const
-	{
-		return PixData.get() + sizeof(int32_t) * 2;
-	}
-
-	int32_t Glyph::Size(const Font& f, char32_t char_id, bool gray, mat2f t)
-	{
-		HDC FontDC = CreateCompatibleDC(0);
-		SelectObject(FontDC, f);
+		SelectObject(FontDC, static_cast<HGDIOBJ>(Handle));
 
 		MAT2 Matrix;
 		Matrix.eM11 = fl2fx(t[0][0]);
@@ -328,5 +262,75 @@ namespace airs
 		ReleaseDC(0, FontDC);
 		DeleteObject(FontDC);
 		return gm.gmBlackBoxX * gm.gmBlackBoxY;
+	}
+	Glyph Font::GetGlyph(char32_t char_id, bool gray, mat2f t) const
+	{
+		HDC FontDC = CreateCompatibleDC(0);
+		SelectObject(FontDC, static_cast<HGDIOBJ>(Handle));
+
+		MAT2 Matrix;
+		Matrix.eM11 = fl2fx(t[0][0]);
+		Matrix.eM21 = fl2fx(t[1][0]);
+		Matrix.eM22 = fl2fx(t[1][1]);
+		Matrix.eM12 = fl2fx(t[0][1]);
+
+		std::uint32_t format = gray ? GGO_GRAY8_BITMAP : GGO_BITMAP;
+
+		GLYPHMETRICS gm;
+		std::uint32_t size = GetGlyphOutlineW(FontDC, char_id, format, &gm, 0, 0, &Matrix);
+		if (size != GDI_ERROR)
+		{
+			std::uint8_t* buffer = new uint8_t[size];
+			GetGlyphOutlineW(FontDC, char_id, format, &gm, size, buffer, &Matrix);
+			gm.gmBlackBoxX *= size > 0;
+			gm.gmBlackBoxY *= size > 0;
+
+			Glyph::Metrics dim;
+			dim.BitmapW = gm.gmBlackBoxX;
+			dim.BitmapH = gm.gmBlackBoxY;
+			dim.OriginX = gm.gmptGlyphOrigin.x;
+			dim.OriginY = Descent() + gm.gmptGlyphOrigin.y - dim.BitmapH;
+			dim.PosIncX = gm.gmCellIncX;
+			dim.PosIncY = gm.gmCellIncY;
+			auto data = std::make_unique<std::uint8_t[]>(sizeof(std::uint8_t) * gm.gmBlackBoxX * gm.gmBlackBoxY + sizeof(std::int32_t) * 2);
+			(reinterpret_cast<std::int32_t*>(data.get()))[0] = gm.gmBlackBoxX;
+			(reinterpret_cast<std::int32_t*>(data.get()))[1] = gm.gmBlackBoxY;
+
+			if (gray)
+			{
+				std::size_t row = gm.gmBlackBoxX + 3ull - (gm.gmBlackBoxX + 3ull) % 4ull;
+				for (std::size_t y = 0; y < gm.gmBlackBoxY; y++)
+					for (std::size_t x = 0; x < gm.gmBlackBoxX; x++)
+						data[sizeof(std::int32_t) * 2 + y * gm.gmBlackBoxX + x] =
+						buffer[(gm.gmBlackBoxY - y - 1) * row + x] * 255 / 64;
+			}
+			else
+			{
+				std::size_t row = (gm.gmBlackBoxX + 31 - (gm.gmBlackBoxX + 31) % 32) / 8;
+				for (std::size_t y = 0; y < gm.gmBlackBoxY; y++)
+					for (std::size_t x = 0; x < gm.gmBlackBoxX; x++)
+						data[sizeof(std::int32_t) * 2 + y * gm.gmBlackBoxX + x] =
+						((buffer[x / 8 + row * (gm.gmBlackBoxY - y - 1)] >> (7 - x % 8)) & 1) * 255;
+			}
+
+			delete[] buffer;
+			DeleteDC(FontDC);
+
+			return Glyph(data, dim);
+		}
+		else
+		{
+			Glyph::Metrics dim;
+			dim.BitmapW = 0;
+			dim.BitmapH = 0;
+			dim.OriginX = 0;
+			dim.OriginY = 0;
+			dim.PosIncX = 0;
+			dim.PosIncY = 0;
+			auto data = std::make_unique<uint8_t[]>(sizeof(int32_t) * 2);
+			((int32_t*)(data.get()))[0] = 0;
+			((int32_t*)(data.get()))[1] = 0;
+			return Glyph(data, dim);
+		}
 	}
 }

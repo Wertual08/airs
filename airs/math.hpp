@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <cmath>
 #include <string>
 #include <array>
 
@@ -7,14 +8,14 @@
 
 namespace airs
 {
-	using i8 = int8_t;
-	using u8 = uint8_t;
-	using i16 = int16_t;
-	using u16 = uint16_t;
-	using i32 = int32_t;
-	using u32 = uint32_t;
-	using i64 = int64_t;
-	using u64 = uint64_t;
+	using i8 = std::int8_t;
+	using u8 = std::uint8_t;
+	using i16 = std::int16_t;
+	using u16 = std::uint16_t;
+	using i32 = std::int32_t;
+	using u32 = std::uint32_t;
+	using i64 = std::int64_t;
+	using u64 = std::uint64_t;
 	using f32 = float;
 	using f64 = double;
 
@@ -149,20 +150,11 @@ namespace airs
 			return temp;
 		}
 
-		operator T*()
-		{
-			return static_cast<T*>(static_cast<void*>(this));
-		}
-		operator const T* () const
-		{
-			return static_cast<T*>(static_cast<void*>(this));
-		}
-
 		template<typename V>
 		vec2 rotate(V angle) const
 		{
-			V cs = cos(angle);
-			V sn = sin(angle);
+			V cs = std::cos(angle);
+			V sn = std::sin(angle);
 			return vec2(x * cs - y * sn, x * sn + y * cs);
 		}
 		vec2 abs() const
@@ -180,6 +172,43 @@ namespace airs
 		operator std::string()
 		{
 			return std::move("{ " + std::to_string(x) + "; " + std::to_string(y) + " }");
+		}
+		T* data() { return static_cast<T*>(static_cast<void*>(this)); }
+		const T* data() const { return static_cast<const T*>(static_cast<const void*>(this)); }
+		T& operator[](std::size_t i) { return data()[i]; }
+		const T& operator[](std::size_t i) const { return data()[i]; }
+
+		friend vec2 operator+(const vec2& vec, const T& val)
+		{
+			return vec2(vec.x + val, vec.y + val);
+		}
+		friend vec2 operator-(const vec2& vec, const T& val)
+		{
+			return vec2(vec.x - val, vec.y - val);
+		}
+		friend vec2 operator*(const vec2& vec, const T& val)
+		{
+			return vec2(vec.x * val, vec.y * val);
+		}
+		friend vec2 operator/(const vec2& vec, const T& val)
+		{
+			return vec2(vec.x / val, vec.y / val);
+		}
+		friend vec2 operator+(const T& val, const vec2& vec)
+		{
+			return vec2(vec.x + val, vec.y + val);
+		}
+		friend vec2 operator-(const T& val, const vec2& vec)
+		{
+			return vec2(vec.x - val, vec.y - val);
+		}
+		friend vec2 operator*(const T& val, const vec2& vec)
+		{
+			return vec2(vec.x * val, vec.y * val);
+		}
+		friend vec2 operator/(const T& val, const vec2& vec)
+		{
+			return vec2(vec.x / val, vec.y / val);
 		}
 	};
 	template<typename T>
@@ -331,15 +360,6 @@ namespace airs
 			return temp;
 		}
 
-		operator T* ()
-		{
-			return static_cast<T*>(static_cast<void*>(this));
-		}
-		operator const T* () const
-		{
-			return static_cast<T*>(static_cast<void*>(this));
-		}
-
 		vec3 abs() const
 		{
 			return vec3(::abs(x), ::abs(y), ::abs(z));
@@ -351,6 +371,43 @@ namespace airs
 		T sqr() const
 		{
 			return x * x + y * y + z * z;
+		}
+		T* data() { return static_cast<T*>(static_cast<void*>(this)); }
+		const T* data() const { return static_cast<const T*>(static_cast<const void*>(this)); }
+		T& operator[](std::size_t i) { return data()[i]; }
+		const T& operator[](std::size_t i) const { return data()[i]; }
+
+		friend vec3 operator+(const vec3& vec, const T& val)
+		{
+			return vec3(vec.x + val, vec.y + val, vec.z + val);
+		}
+		friend vec3 operator-(const vec3& vec, const T& val)
+		{
+			return vec3(vec.x - val, vec.y - val, vec.z - val);
+		}
+		friend vec3 operator*(const vec3& vec, const T& val)
+		{
+			return vec3(vec.x * val, vec.y * val, vec.z * val);
+		}
+		friend vec3 operator/(const vec3& vec, const T& val)
+		{
+			return vec3(vec.x / val, vec.y / val, vec.z / val);
+		}
+		friend vec3 operator+(const T& val, const vec3& vec)
+		{
+			return vec3(vec.x + val, vec.y + val, vec.z + val);
+		}
+		friend vec3 operator-(const T& val, const vec3& vec)
+		{
+			return vec3(vec.x - val, vec.y - val, vec.z - val);
+		}
+		friend vec3 operator*(const T& val, const vec3& vec)
+		{
+			return vec3(vec.x * val, vec.y * val, vec.z * val);
+		}
+		friend vec3 operator/(const T& val, const vec3& vec)
+		{
+			return vec3(vec.x / val, vec.y / val, vec.z / val);
 		}
 	};
 	template<typename T>
@@ -385,6 +442,7 @@ namespace airs
 		vec4(T vx, T vy) : x(vx), y(vy), z(), w() { }
 		vec4(T vx, T vy, T vz) : x(vx), y(vy), z(vz), w() { }
 		vec4(T vx, T vy, T vz, T vw) : x(vx), y(vy), z(vz), w(vw) { }
+		vec4(const vec2<T>& lvec, const vec2<T>& rvec) : x(lvec.x), y(lvec.y), z(rvec.x), w(rvec.y) { }
 		template<typename V0, typename V1, typename V2, typename V3>
 		vec4(V0 vx, V1 vy, V2 vz, V3 vw) : x(static_cast<T>(vx)), y(static_cast<T>(vy)), z(static_cast<T>(vz)), w(static_cast<T>(vw)) { }
 		template<typename V>
@@ -520,15 +578,6 @@ namespace airs
 			return temp;
 		}
 
-		operator T* ()
-		{
-			return static_cast<T*>(static_cast<void*>(this));
-		}
-		operator const T* ()
-		{
-			return static_cast<T*>(static_cast<void*>(this));
-		}
-
 		vec4 abs() const
 		{
 			return vec4(::abs(x), ::abs(y), ::abs(z), ::abs(w));
@@ -540,6 +589,43 @@ namespace airs
 		T sqr() const
 		{
 			return x * x + y * y + z * z + w * w;
+		}
+		T* data() { return static_cast<T*>(static_cast<void*>(this)); }
+		const T* data() const { return static_cast<const T*>(static_cast<const void*>(this)); }
+		T& operator[](std::size_t i) { return data()[i]; }
+		const T& operator[](std::size_t i) const { return data()[i]; }
+
+		friend vec4 operator+(const vec4& vec, const T& val)
+		{
+			return vec4(vec.x + val, vec.y + val, vec.z + val, vec.w + val);
+		}
+		friend vec4 operator-(const vec4& vec, const T& val)
+		{
+			return vec4(vec.x - val, vec.y - val, vec.z - val, vec.w - val);
+		}
+		friend vec4 operator*(const vec4& vec, const T& val)
+		{
+			return vec4(vec.x * val, vec.y * val, vec.z * val, vec.w * val);
+		}
+		friend vec4 operator/(const vec4& vec, const T& val)
+		{
+			return vec4(vec.x / val, vec.y / val, vec.z / val, vec.w / val);
+		}
+		friend vec4 operator+(const T& val, const vec4& vec)
+		{
+			return vec4(vec.x + val, vec.y + val, vec.z + val, vec.w + val);
+		}
+		friend vec4 operator-(const T& val, const vec4& vec)
+		{
+			return vec4(vec.x - val, vec.y - val, vec.z - val, vec.w - val);
+		}
+		friend vec4 operator*(const T& val, const vec4& vec)
+		{
+			return vec4(vec.x * val, vec.y * val, vec.z * val, vec.w * val);
+		}
+		friend vec4 operator/(const T& val, const vec4& vec)
+		{
+			return vec4(vec.x / val, vec.y / val, vec.z / val, vec.w / val);
 		}
 	};
 
@@ -576,36 +662,36 @@ namespace airs
 	using vec4f32 = vec4<f32>;
 	using vec4f64 = vec4<f64>;
 
-	using vec2b = vec2<int8_t>;
-	using vec2ub = vec2<uint8_t>;
-	using vec2s = vec2<int16_t>;
-	using vec2us = vec2<uint16_t>;
-	using vec2i = vec2<int32_t>;
-	using vec2ui = vec2<uint32_t>;
-	using vec2l = vec2<int64_t>;
-	using vec2ul = vec2<uint64_t>;
+	using vec2b = vec2<std::int8_t>;
+	using vec2ub = vec2<std::uint8_t>;
+	using vec2s = vec2<std::int16_t>;
+	using vec2us = vec2<std::uint16_t>;
+	using vec2i = vec2<std::int32_t>;
+	using vec2ui = vec2<std::uint32_t>;
+	using vec2l = vec2<std::int64_t>;
+	using vec2ul = vec2<std::uint64_t>;
 	using vec2f = vec2<float>;
 	using vec2d = vec2<double>;
 
-	using vec3b = vec3<int8_t>;
-	using vec3ub = vec3<uint8_t>;
-	using vec3s = vec3<int16_t>;
-	using vec3us = vec3<uint16_t>;
-	using vec3i = vec3<int32_t>;
-	using vec3ui = vec3<uint32_t>;
-	using vec3l = vec3<int64_t>;
-	using vec3ul = vec3<uint64_t>;
+	using vec3b = vec3<std::int8_t>;
+	using vec3ub = vec3<std::uint8_t>;
+	using vec3s = vec3<std::int16_t>;
+	using vec3us = vec3<std::uint16_t>;
+	using vec3i = vec3<std::int32_t>;
+	using vec3ui = vec3<std::uint32_t>;
+	using vec3l = vec3<std::int64_t>;
+	using vec3ul = vec3<std::uint64_t>;
 	using vec3f = vec3<float>;
 	using vec3d = vec3<double>;
 
-	using vec4b = vec4<int8_t>;
-	using vec4ub = vec4<uint8_t>;
-	using vec4s = vec4<int16_t>;
-	using vec4us = vec4<uint16_t>;
-	using vec4i = vec4<int32_t>;
-	using vec4ui = vec4<uint32_t>;
-	using vec4l = vec4<int64_t>;
-	using vec4ul = vec4<uint64_t>;
+	using vec4b = vec4<std::int8_t>;
+	using vec4ub = vec4<std::uint8_t>;
+	using vec4s = vec4<std::int16_t>;
+	using vec4us = vec4<std::uint16_t>;
+	using vec4i = vec4<std::int32_t>;
+	using vec4ui = vec4<std::uint32_t>;
+	using vec4l = vec4<std::int64_t>;
+	using vec4ul = vec4<std::uint64_t>;
 	using vec4f = vec4<float>;
 	using vec4d = vec4<double>;
 

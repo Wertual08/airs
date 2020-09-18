@@ -8,32 +8,70 @@
 
 namespace airs
 {
+	class Glyph
+	{
+		friend class Font;
+	public:
+		struct Metrics
+		{
+			std::int32_t BitmapW;
+			std::int32_t BitmapH;
+			std::int32_t OriginX;
+			std::int32_t OriginY;
+			std::int16_t PosIncX;
+			std::int16_t PosIncY;
+		};
+
+	private:
+		Metrics Dimensions;
+		std::unique_ptr<uint8_t[]> PixData;
+
+		Glyph(std::unique_ptr<uint8_t[]>& data, const Metrics& dimensions);
+
+	public:
+		Glyph(Glyph&& g) noexcept;
+		Glyph& operator=(Glyph&& g) noexcept;
+		Glyph(const Glyph& g);
+		Glyph& operator=(const Glyph& g);
+		~Glyph();
+
+		std::int32_t Size() const;
+		std::int32_t BitmapW() const;
+		std::int32_t BitmapH() const;
+		std::int32_t OriginX() const;
+		std::int32_t OriginY() const;
+		std::int16_t PosIncX() const;
+		std::int16_t PosIncY() const;
+		Metrics GetMetrics() const;
+		operator const std::uint8_t* () const;
+	};
+
 	class Font
 	{
 	private:
 		void* Handle;
 		struct Metrics
 		{
-			int32_t Height;
-			int32_t Ascent;
-			int32_t Descent;
-			int32_t InternalLeading;
-			int32_t ExternalLeading;
-			int32_t AveCharWidth;
-			int32_t MaxCharWidth;
-			int32_t Weight;
-			int32_t Overhang;
-			int32_t DigitizedAspectX;
-			int32_t DigitizedAspectY;
+			std::int32_t Height;
+			std::int32_t Ascent;
+			std::int32_t Descent;
+			std::int32_t InternalLeading;
+			std::int32_t ExternalLeading;
+			std::int32_t AveCharWidth;
+			std::int32_t MaxCharWidth;
+			std::int32_t Weight;
+			std::int32_t Overhang;
+			std::int32_t DigitizedAspectX;
+			std::int32_t DigitizedAspectY;
 			char16_t FirstChar;
 			char16_t LastChar;
 			char16_t DefaultChar;
 			char16_t BreakChar;
-			uint8_t Italic;
-			uint8_t Underlined;
-			uint8_t StruckOut;
-			uint8_t PitchAndFamily;
-			uint8_t CharSet;
+			std::uint8_t Italic;
+			std::uint8_t Underlined;
+			std::uint8_t StruckOut;
+			std::uint8_t PitchAndFamily;
+			std::uint8_t CharSet;
 		} FontMetrics;
 
 	public:
@@ -53,30 +91,28 @@ namespace airs
 		~Font();
 		Font& operator=(const Font&) = delete;
 
-		int32_t Height() const;
-		int32_t Ascent() const;
-		int32_t Descent() const;
-		int32_t InternalLeading() const;
-		int32_t ExternalLeading() const;
-		int32_t AveCharWidth() const;
-		int32_t MaxCharWidth() const;
-		int32_t Weight() const;
-		int32_t Overhang() const;
-		int32_t DigitizedAspectX() const;
-		int32_t DigitizedAspectY() const;
+		std::int32_t Height() const;
+		std::int32_t Ascent() const;
+		std::int32_t Descent() const;
+		std::int32_t InternalLeading() const;
+		std::int32_t ExternalLeading() const;
+		std::int32_t AveCharWidth() const;
+		std::int32_t MaxCharWidth() const;
+		std::int32_t Weight() const;
+		std::int32_t Overhang() const;
+		std::int32_t DigitizedAspectX() const;
+		std::int32_t DigitizedAspectY() const;
 		char16_t FirstChar() const;
 		char16_t LastChar() const;
 		char16_t DefaultChar() const;
 		char16_t BreakChar() const;
-		uint8_t Italic() const;
-		uint8_t Underlined() const;
-		uint8_t StruckOut() const;
-		uint8_t PitchAndFamily() const;
-		uint8_t CharSet() const;
+		std::uint8_t Italic() const;
+		std::uint8_t Underlined() const;
+		std::uint8_t StruckOut() const;
+		std::uint8_t PitchAndFamily() const;
+		std::uint8_t CharSet() const;
 
-		operator void* () const;
-
-		enum Weight : int32_t
+		enum Weight : std::int32_t
 		{
 			DontCare =		0,
 			Thin =			100,
@@ -94,13 +130,13 @@ namespace airs
 			Heavy =			900,
 			Black =			900,
 		};
-		enum Pitch : uint32_t
+		enum Pitch : std::uint32_t
 		{
 			Default =		0, 
 			Fixed =			1,			
 			Variable =		2, 
 		};
-		enum Family : uint32_t
+		enum Family : std::uint32_t
 		{
 			FDontCare =		0 << 4, 
 			Roman =			1 << 4, 
@@ -109,43 +145,9 @@ namespace airs
 			Script =		4 << 4, 
 			Decorative =	5 << 4, 
 		};
-	};
 
-	class Glyph
-	{
-	public:
-		struct Metrics
-		{
-			int32_t BitmapW;
-			int32_t BitmapH;
-			int32_t	OriginX;
-			int32_t OriginY;
-			int16_t PosIncX;
-			int16_t PosIncY;
-		};
-
-	private:
-		Metrics Dimensions;
-		std::unique_ptr<uint8_t[]> PixData;
-
-	public:
-		Glyph(const Font& font, char32_t char_id, bool gray = true, mat2f t = mat2f::identity) noexcept;
-		Glyph(Glyph&& g) noexcept;
-		Glyph& operator=(Glyph&& g) noexcept;
-		Glyph(const Glyph& g);
-		Glyph& operator=(const Glyph& g);
-		~Glyph();
-
-		int32_t Size() const;
-		int32_t BitmapW() const;
-		int32_t BitmapH() const;
-		int32_t OriginX() const;
-		int32_t OriginY() const;
-		int16_t PosIncX() const;
-		int16_t PosIncY() const;
-		Metrics GetMetrics() const;
-		operator const uint8_t*() const;
-
-		static int32_t Size(const Font& f, char32_t char_id, bool gray = true, mat2f t = mat2f::identity);
+		std::int32_t Size(char32_t char_id, bool gray = true, mat2f t = mat2f::identity) const;
+		Glyph GetGlyph(char32_t char_id, bool gray = true, mat2f t = mat2f::identity) const;
+		Glyph operator[](char32_t char_id) const { return GetGlyph(char_id); }
 	};
 }
