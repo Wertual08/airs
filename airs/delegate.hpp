@@ -1,15 +1,11 @@
 #pragma once
+#include <iostream>
+#include <cstddef>
 
 
 
 namespace airs
 {
-	template<typename LAMBDA>
-	LAMBDA& let_it_live_forever(const LAMBDA& instance)
-	{
-		return *(new LAMBDA(instance));
-	}
-
 	template <typename T> class delegate;
 
 	template<typename RTYPE, typename ...ATYPE>
@@ -20,12 +16,7 @@ namespace airs
 
 		void* Object;
 		stub_type Stub;
-
-		delegate(void* anObject, stub_type aStub)
-		{
-			Object = anObject;
-			Stub = aStub;
-		}
+		std::size_t ObjectSize;
 
 		template <class T, RTYPE(T:: * TMethod)(ATYPE...)>
 		static RTYPE method_stub(void* this_ptr, ATYPE... params)
@@ -45,83 +36,116 @@ namespace airs
 		template <typename LAMBDA>
 		static RTYPE lambda_stub(void* this_ptr, ATYPE... arg)
 		{
-			return (static_cast<LAMBDA*>(this_ptr)->operator())(arg...);
+			return (reinterpret_cast<LAMBDA*>(this_ptr)->operator())(arg...);
+		}
+
+		void assign(void* object, stub_type stub, std::size_t size)
+		{
+			if (ObjectSize) delete[] Object;
+
+			if ((ObjectSize = size) > 0)
+			{
+				Object = new char[size];
+				for (std::size_t i = 0; i < size; i++)
+				{
+					reinterpret_cast<char*>(Object)[i] = reinterpret_cast<char*>(object)[i];
+				}
+			}
+			else Object = object;
+			Stub = stub;
 		}
 
 	public:
-		delegate() { Object = nullptr; Stub = nullptr; }
+		delegate() { Object = nullptr; Stub = nullptr; ObjectSize = 0; }
 		delegate(const delegate& d) 
 		{ 
-			Object = d.Object; 
-			Stub = d.Stub; 
+			assign(d.Object, d.Stub, d.ObjectSize);
 		}
 		template <typename LAMBDA>
-		delegate(const LAMBDA& instance) { Object = const_cast<LAMBDA*>(&instance); Stub = &lambda_stub<LAMBDA>; }
+		delegate(const LAMBDA& instance)
+		{
+			assign(const_cast<LAMBDA*>(&instance), &lambda_stub<LAMBDA>, 0);
+		}
+		template <typename LAMBDA>
+		delegate(LAMBDA&& instance)
+		{
+			assign(&instance, &lambda_stub<LAMBDA>, sizeof(LAMBDA));
+		}
+		~delegate()
+		{
+			if (ObjectSize > 0)
+			{
+				delete[] Object;
+				ObjectSize = 0;
+				Object = nullptr;
+			}
+		}
 		
 		delegate& operator=(const delegate& d) 
 		{
-			Object = d.Object; 
-			Stub = d.Stub;
+			assign(d.Object, d.Stub, d.ObjectSize);
 			return *this;
 		} 
 		template <typename LAMBDA>
 		delegate& operator=(const LAMBDA& instance)
 		{
-			Object = const_cast<LAMBDA*>(&instance);
-			Stub = &lambda_stub<LAMBDA>;
+			assign(const_cast<LAMBDA*>(&instance), &lambda_stub<LAMBDA>, 0);
+			return *this;
+		}
+		template <typename LAMBDA>
+		delegate& operator=(LAMBDA&& instance)
+		{
+			throw std::runtime_error("go fuck yourself");
+			//assign(&instance, &lambda_stub<LAMBDA>, sizeof(LAMBDA));
 			return *this;
 		}
 
 		inline bool empty() const { return !Stub; }
-		inline operator bool() const
-		{
-			return Stub;
-		}
+		inline operator bool() const { return Stub; }
 
 		RTYPE operator()(ATYPE... arg) const
 		{
 			return (*Stub)(Object, arg...);
 		}
 
-		bool operator == (const delegate& d) const { return d.Stub == Stub && d.Object == Object; }
-		bool operator != (const delegate& d) const { return d.Stub != Stub || d.Object != Object; }
+		bool operator == (const delegate& d) const { return d.Stub == Stub && d.Object == Object && d.ObjectSize == ObjectSize; }
+		bool operator != (const delegate& d) const { return d.Stub != Stub || d.Object != Object || d.ObjectSize == ObjectSize; }
 
 		template <class T, RTYPE(T::* TMethod)(ATYPE...)>
 		void bind(T& instance)
 		{
-			Object = &instance; 
-			Stub = &method_stub<T, TMethod>;
+			assign(&instance, &method_stub<T, TMethod>, 0);
 		}
 		template <class T, RTYPE(T::* TMethod)(ATYPE...)>
 		void bind(T* instance)
 		{
-			Object = instance;
-			Stub = &method_stub<T, TMethod>;
+			assign(instance, &method_stub<T, TMethod>, 0);
 		}
 		template <class T, RTYPE(T:: * TMethod)(ATYPE...) const>
 		void bind(T const& instance)
 		{
-			Object = const_cast<T*>(&instance);
-			Stub = &const_method_stub<T, TMethod>;
+			assign(const_cast<T*>(&instance), &const_method_stub<T, TMethod>, 0);
 		}
 		template <class T, RTYPE(T::* TMethod)(ATYPE...) const>
 		void bind(T const* instance)
 		{
-			Object = const_cast<T*>(instance);
-			Stub = &const_method_stub<T, TMethod>;
+			assign(const_cast<T*>(instance), &const_method_stub<T, TMethod>, 0);
 		}
 		template <RTYPE(*TMethod)(ATYPE...)>
 		void bind()
 		{
-			Object = nullptr;
-			Stub = &function_stub<TMethod>;
+			assign(nullptr, &function_stub<TMethod>, 0);
 		}
 		template <typename LAMBDA>
 		void bind(const LAMBDA& instance)
 		{
-			Object = const_cast<LAMBDA*>(&instance);
-			Stub = &lambda_stub<LAMBDA>;
+			assign(const_cast<LAMBDA*>(&instance), &lambda_stub<LAMBDA>, 0);
 		}
-		void clear() { Stub = nullptr; };
+		template <typename LAMBDA>
+		void bind(LAMBDA&& instance)
+		{
+			assign(&instance, &lambda_stub<LAMBDA>, sizeof(LAMBDA));
+		}
+		void clear() { assign(nullptr, nullptr, 0); };
 	};
 }

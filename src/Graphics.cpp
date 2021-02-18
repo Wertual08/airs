@@ -63,7 +63,12 @@ namespace airs
             for (size_t lx = 0; lx < src_row; lx++)
             {
                 converter instance = { color };
-                instance.rgba = vec4us(instance.rgba) * src[lx] / 255;
+                instance.rgba = vec4ub(
+                    (int)instance.rgba.x * src[lx] / 255,
+                    (int)instance.rgba.x * src[lx] / 255,
+                    (int)instance.rgba.x * src[lx] / 255,
+                    (int)instance.rgba.x * src[lx] / 255
+                );
                 AlphaBlend(dst[lx], ColorMult(color, src[lx]));
             }
             src += src_row;

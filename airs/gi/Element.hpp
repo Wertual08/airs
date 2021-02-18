@@ -1,8 +1,10 @@
 #pragma once
 #include <cstdint>
-#include "../math.hpp"
-#include "../KeyCodes.hpp"
-#include "Renderer.hpp"
+#include <vector>
+#include <airs/math.hpp>
+#include <airs/KeyCodes.hpp>
+#include <airs/gi/Renderer.hpp>
+#include <airs/gi/EventArgs.hpp>
 
 
 
@@ -31,67 +33,105 @@ namespace airs::gi
         };
 
     private:
-        //GIEventRing* EventRing;
-
         std::uint32_t ID;
         airs::vec2i Position;
         airs::vec2i Extent;
         Constraint Constraints;
         bool Resizable;
+
         Element* Owner;
+        std::vector<Element*> Elements;
+
+        bool Master;
 
     protected:
-        //bool PushEvent(const GIEvent& e) { return EventRing->Push(e); }
+        virtual void OnMouseDown(MouseEventArgs& args) { }
+        virtual void OnMouseUp(MouseEventArgs& args) { }
+        virtual void OnMouseWheel(MouseEventArgs& args) { }
+        virtual void OnMouseMove(MouseEventArgs& args) { }
+        virtual void OnKeyDown(KeyboardEventArgs& args) { }
+        virtual void OnKeyUp(KeyboardEventArgs& args) { }
+        virtual void OnChar(KeyboardEventArgs& args) { }
 
     public:
         Element() :
-            //EventRing(nullptr),
             ID(0),
             Resizable(false),
-            Owner(nullptr)
+            Owner(nullptr),
+            Master(false)
         {
         }
+        Element(Element&& element) noexcept
+        {
+            std::swap(ID, element.ID);
+            std::swap(Position, element.Position);
+            std::swap(Extent, element.Extent);
+            std::swap(Constraints, element.Constraints);
+            std::swap(Resizable, element.Resizable);
 
-        //void SetEventRing(GIEventRing* ring) { EventRing = ring; }
+            std::swap(Owner, element.Owner);
+            std::swap(Elements, element.Elements);
+
+            std::swap(Master, element.Master);
+        }
+        ~Element()
+        {
+            if (Master)
+                for (auto elem : Elements)
+                    delete elem;
+        }
+
+        bool GetMaster() const { return Master; }
+        void SetMaster(bool master) { Master = master; }
 
         std::uint32_t GetID() const { return ID; }
         virtual void SetID(std::uint32_t id) { ID = id; }
 
         airs::vec2i GetPosition() const { return Position; }
-        virtual void SetPosition(airs::vec2i pos) { Position = pos; }
+        virtual void SetPosition(airs::vec2i pos) 
+        { 
+            Position = pos;
+            for (Element* element : Elements) element->ApplyConstraints(Position, Extent);
+        }
 
         airs::vec2i GetExtent() const { return Extent; }
-        virtual void SetExtent(airs::vec2i ext) { Extent = ext; }
+        virtual void SetExtent(airs::vec2i ext) 
+        { 
+            Extent = ext;
+            for (Element* element : Elements) element->ApplyConstraints(Position, Extent);
+        }
 
         Constraint GetConstraints() const { return Constraints; }
         virtual void SetConstraints(Constraint con) { Constraints = con; }
-        Constraint GetConstraintU() const { return Constraints; }
         virtual void SetConstraintU(Anchor anc, std::int32_t off) { Constraints.AnchorU = anc; Constraints.OffsetU = off; }
-        Constraint GetConstraintL() const { return Constraints; }
         virtual void SetConstraintL(Anchor anc, std::int32_t off) { Constraints.AnchorL = anc; Constraints.OffsetL = off; }
-        Constraint GetConstraintD() const { return Constraints; }
         virtual void SetConstraintD(Anchor anc, std::int32_t off) { Constraints.AnchorD = anc; Constraints.OffsetD = off; }
-        Constraint GetConstraintR() const { return Constraints; }
         virtual void SetConstraintR(Anchor anc, std::int32_t off) { Constraints.AnchorR = anc; Constraints.OffsetR = off; }
 
         bool GetResizable() const { return Resizable; }
         virtual void SetResizable(bool res) { Resizable = res; }
 
         Element* GetOwner() const { return Owner; }
-        virtual void SetOwner(Element& own) { Owner = &own; }
+        virtual void SetOwner(Element* own) { Owner = own; }
 
-        virtual bool IsContainer() const { return false; }
+        void Add(Element* element)
+        {
+            element->SetOwner(this);
+            element->ApplyConstraints(GetPosition(), GetExtent());
+            Elements.push_back(element);
+        }
+        void Remove(Element* element)
+        {
+            std::size_t j = 0;
+            for (std::size_t i = 0; i < Elements.size(); i++)
+                if (Elements[i] != element) Elements[j++] = Elements[i];
+            Elements.resize(j);
+        }
+        std::size_t Size() const { return Elements.size(); }
+        Element* operator[](std::size_t i) const { return Elements[i]; }
+
 
         bool Contains(airs::vec2i pos) const { return pos >= Position && pos < Position + Extent; }
-
-        virtual bool OnMouseDown(airs::vec2i pos, airs::key key) { return false; }
-        virtual bool OnMouseUp(airs::vec2i pos, airs::key key) { return false; }
-        virtual bool OnMouseWheel(airs::vec2i pos, float delta) { return false; }
-        virtual bool OnMouseHWheel(airs::vec2i pos, float delta) { return false; }
-        virtual bool OnMouseMove(airs::vec2i pos) { return false; }
-        virtual bool OnKeyDown(airs::key key) { return false; }
-        virtual bool OnKeyUp(airs::key key) { return false; }
-        virtual bool OnChar(char32_t c) { return false; }
 
         void ApplyConstraints(airs::vec2i pos, airs::vec2i ext)
         {
@@ -144,8 +184,56 @@ namespace airs::gi
                 case Larger: Position.y = pos.y + ext.y + Constraints.OffsetU - Extent.y; break;
                 }
             }
+
+            for (Element* element : Elements) element->ApplyConstraints(Position, Extent);
         }
 
-        virtual void Render(Renderer& renderer) { }
+        void SendMouseDown(MouseEventArgs& args)
+        { 
+            std::size_t i = Elements.size();
+            while (i--) Elements[i]->SendMouseDown(args);
+            OnMouseDown(args);
+        }
+        void SendMouseUp(MouseEventArgs& args)
+        {
+            std::size_t i = Elements.size();
+            while (i--) Elements[i]->SendMouseUp(args);
+            OnMouseUp(args);
+        }
+        void SendMouseWheel(MouseEventArgs& args)
+        {
+            std::size_t i = Elements.size();
+            while (i--) Elements[i]->SendMouseWheel(args);
+            OnMouseWheel(args);
+        }
+        void SendMouseMove(MouseEventArgs& args)
+        {
+            std::size_t i = Elements.size();
+            while (i--) Elements[i]->SendMouseMove(args);
+            OnMouseMove(args);
+        }
+        void SendKeyDown(KeyboardEventArgs& args)
+        {
+            std::size_t i = Elements.size();
+            while (i--) Elements[i]->SendKeyDown(args);
+            OnKeyDown(args);
+        }
+        void SendKeyUp(KeyboardEventArgs& args)
+        {
+            std::size_t i = Elements.size();
+            while (i--) Elements[i]->SendKeyUp(args);
+            OnKeyUp(args);
+        }
+        void SendChar(KeyboardEventArgs& args)
+        {
+            std::size_t i = Elements.size();
+            while (i--) Elements[i]->SendChar(args);
+            OnChar(args);
+        }
+
+        virtual void Render(Renderer& renderer) 
+        { 
+            for (Element* element : Elements) element->Render(renderer); 
+        }
     };
 }

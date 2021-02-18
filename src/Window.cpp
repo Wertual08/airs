@@ -1,5 +1,5 @@
 #include "airs/Window.hpp"
-#include "airs/Utilities.hpp"
+#include "airs/encoding.hpp"
 #include <stdexcept>
 #include <Windows.h>
 #include <Windowsx.h>
@@ -83,14 +83,14 @@ namespace airs
 	{
 		Wheel += d;
 	}
-	void Window::UserInput::OnKeyDown(key b)
+	void Window::UserInput::OnKeyDown(Key b)
 	{
 		if (CharsLocked) return;
 		int code = static_cast<int>(b);
 		if (code < 0 || code >= 256) return;
 		KeyStates[code] = true;
 	}
-	void Window::UserInput::OnKeyUp(key b)
+	void Window::UserInput::OnKeyUp(Key b)
 	{
 		if (CharsLocked) return;
 		int code = static_cast<int>(b);
@@ -127,13 +127,13 @@ namespace airs
 	{
 		CharsLocked = false;
 	}
-	bool Window::UserInput::KeyState(key b) const
+	bool Window::UserInput::KeyState(Key b) const
 	{
 		int code = static_cast<int>(b);
 		if (code < 0 || code >= 256) return false;
 		return KeyStates[code];
 	}
-	bool Window::UserInput::operator[](key b) const
+	bool Window::UserInput::operator[](Key b) const
 	{
 		int code = static_cast<int>(b);
 		if (code < 0 || code >= 256) return false;
@@ -217,64 +217,64 @@ namespace airs
 
 			case WM_LBUTTONDOWN: {
 				const POINTS pt = MAKEPOINTS(lparam);
-				OnMouseDown(pt.x, Size.y - 1 - pt.y, key::LButton);
-				OnKeyDown(key::LButton);
+				OnMouseDown(pt.x, Size.y - 1 - pt.y, Key::LButton);
+				OnKeyDown(Key::LButton);
 			} break;
 			case WM_MBUTTONDOWN: {
 				const POINTS pt = MAKEPOINTS(lparam);
-				OnMouseDown(pt.x, Size.y - 1 - pt.y, key::MButton);
-				OnKeyDown(key::MButton);
+				OnMouseDown(pt.x, Size.y - 1 - pt.y, Key::MButton);
+				OnKeyDown(Key::MButton);
 			} break;
 			case WM_RBUTTONDOWN: {
 				const POINTS pt = MAKEPOINTS(lparam);
-				OnMouseDown(pt.x, Size.y - 1 - pt.y, key::RButton);
-				OnKeyDown(key::RButton);
+				OnMouseDown(pt.x, Size.y - 1 - pt.y, Key::RButton);
+				OnKeyDown(Key::RButton);
 			} break;
 			case WM_XBUTTONDOWN: {
 				const POINTS pt = MAKEPOINTS(lparam);
 				if (GET_XBUTTON_WPARAM(wparam) == 1)
 				{
-					OnMouseDown(pt.x, Size.y - 1 - pt.y, key::XButton1);
-					OnKeyDown(key::XButton1);
+					OnMouseDown(pt.x, Size.y - 1 - pt.y, Key::XButton1);
+					OnKeyDown(Key::XButton1);
 				}
 				if (GET_XBUTTON_WPARAM(wparam) == 2)
 				{
-					OnMouseDown(pt.x, Size.y - 1 - pt.y, key::XButton2);
-					OnKeyDown(key::XButton2);
+					OnMouseDown(pt.x, Size.y - 1 - pt.y, Key::XButton2);
+					OnKeyDown(Key::XButton2);
 				}
 			} break;
-			case WM_SYSKEYDOWN: OnKeyDown(static_cast<key>(wparam)); return 0; break;
-			case WM_KEYDOWN: OnKeyDown(static_cast<key>(wparam)); break;
+			case WM_SYSKEYDOWN: OnKeyDown(static_cast<Key>(wparam)); return 0; break;
+			case WM_KEYDOWN: OnKeyDown(static_cast<Key>(wparam)); break;
 			case WM_LBUTTONUP: {
 				const POINTS pt = MAKEPOINTS(lparam);
-				OnMouseUp(pt.x, Size.y - 1 - pt.y, key::LButton);
-				OnKeyUp(key::LButton);
+				OnMouseUp(pt.x, Size.y - 1 - pt.y, Key::LButton);
+				OnKeyUp(Key::LButton);
 			}  break;
 			case WM_MBUTTONUP: {
 				const POINTS pt = MAKEPOINTS(lparam);
-				OnMouseUp(pt.x, Size.y - 1 - pt.y, key::MButton);
-				OnKeyUp(key::MButton);
+				OnMouseUp(pt.x, Size.y - 1 - pt.y, Key::MButton);
+				OnKeyUp(Key::MButton);
 			} break;
 			case WM_RBUTTONUP: {
 				const POINTS pt = MAKEPOINTS(lparam);
-				OnMouseUp(pt.x, Size.y - 1 - pt.y, key::RButton);
-				OnKeyUp(key::RButton);
+				OnMouseUp(pt.x, Size.y - 1 - pt.y, Key::RButton);
+				OnKeyUp(Key::RButton);
 			} break;
 			case WM_XBUTTONUP: {
 				const POINTS pt = MAKEPOINTS(lparam);
 				if (GET_XBUTTON_WPARAM(wparam) == 1)
 				{
-					OnMouseUp(pt.x, Size.y - 1 - pt.y, key::XButton1);
-					OnKeyUp(key::XButton1);
+					OnMouseUp(pt.x, Size.y - 1 - pt.y, Key::XButton1);
+					OnKeyUp(Key::XButton1);
 				}
 				if (GET_XBUTTON_WPARAM(wparam) == 2)
 				{
-					OnMouseUp(pt.x, Size.y - 1 - pt.y, key::XButton2);
-					OnKeyUp(key::XButton2);
+					OnMouseUp(pt.x, Size.y - 1 - pt.y, Key::XButton2);
+					OnKeyUp(Key::XButton2);
 				}
 			} break;
-			case WM_SYSKEYUP: OnKeyUp(static_cast<key>(wparam)); return 0; break;
-			case WM_KEYUP: OnKeyUp(static_cast<key>(wparam)); break;
+			case WM_SYSKEYUP: OnKeyUp(static_cast<Key>(wparam)); return 0; break;
+			case WM_KEYUP: OnKeyUp(static_cast<Key>(wparam)); break;
 
 			case WM_MOUSEWHEEL: {
 				POINT pt;
@@ -327,11 +327,11 @@ namespace airs
 		Input.CrearState();
 		if (KillFocus) KillFocus();
 	}
-	inline void Window::OnMouseDown(int32_t x, int32_t y, key k)
+	inline void Window::OnMouseDown(int32_t x, int32_t y, Key k)
 	{
 		if (MouseDown) MouseDown(x, y, k);
 	}
-	inline void Window::OnMouseUp(int32_t x, int32_t y, key k)
+	inline void Window::OnMouseUp(int32_t x, int32_t y, Key k)
 	{
 		if (MouseUp) MouseUp(x, y, k);
 	}
@@ -353,12 +353,12 @@ namespace airs
 	{
 		if (MouseLeave) MouseLeave();
 	}
-	inline void Window::OnKeyDown(key k)
+	inline void Window::OnKeyDown(Key k)
 	{
 		Input.OnKeyDown(k);
 		if (KeyDown) KeyDown(k);
 	}
-	inline void Window::OnKeyUp(key k)
+	inline void Window::OnKeyUp(Key k)
 	{
 		Input.OnKeyUp(k);
 		if (KeyUp) KeyUp(k);

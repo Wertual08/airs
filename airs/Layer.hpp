@@ -21,13 +21,13 @@ namespace airs
 		virtual bool OnClose();
 		virtual bool OnFocus();
 		virtual bool OnKillFocus();
-		virtual bool OnMouseDown(int32_t x, int32_t y, key k);
+		virtual bool OnMouseDown(int32_t x, int32_t y, Key k);
 		virtual bool OnMouseMove(int32_t x, int32_t y);
-		virtual bool OnMouseUp(int32_t x, int32_t y, key k);
+		virtual bool OnMouseUp(int32_t x, int32_t y, Key k);
 		virtual bool OnMouseWheel(float d);
 		virtual bool OnMouseHWheel(float d);
-		virtual bool OnKeyDown(key k);
-		virtual bool OnKeyUp(key k);
+		virtual bool OnKeyDown(Key k);
+		virtual bool OnKeyUp(Key k);
 		virtual bool OnChar(char32_t c);
 		virtual bool OnUniChar(char32_t c);
 

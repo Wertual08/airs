@@ -28,7 +28,7 @@ namespace airs
 	{
 		return false;
 	}
-	bool Layer::OnMouseDown(int32_t x, int32_t y, key k)
+	bool Layer::OnMouseDown(int32_t x, int32_t y, Key k)
 	{
 		return false;
 	}
@@ -36,7 +36,7 @@ namespace airs
 	{
 		return false;
 	}
-	bool Layer::OnMouseUp(int32_t x, int32_t y, key k)
+	bool Layer::OnMouseUp(int32_t x, int32_t y, Key k)
 	{
 		return false;
 	}
@@ -48,11 +48,11 @@ namespace airs
 	{
 		return false;
 	}
-	bool Layer::OnKeyDown(key k)
+	bool Layer::OnKeyDown(Key k)
 	{
 		return false;
 	}
-	bool Layer::OnKeyUp(key k)
+	bool Layer::OnKeyUp(Key k)
 	{
 		return false;
 	}

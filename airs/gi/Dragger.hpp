@@ -21,37 +21,28 @@ namespace airs::gi
 
     private:
         bool Dragging = false;
-        airs::vec2i MousePos;
 
     protected:
         DragActionType DragAction;
 
-    public:
-        DragActionType GetDragAction() const { return DragAction; }
-        void SetDragAction(DragActionType dat) { DragAction = dat; }
-
-        virtual bool OnMouseDown(vec2i pos, key key) override
+        virtual void OnMouseDown(MouseEventArgs& args) override
         {
-            if (key == airs::key::LButton && Contains(pos))
+            if (!args.Handled() && args.Key() == airs::Key::LButton && Contains(args.Position()))
             {
                 Dragging = true;
-                MousePos = pos;
-                return true;
+                args.Handle();
             }
-            else return false;
         }
-        virtual bool OnMouseUp(vec2i pos, key key) override
+        virtual void OnMouseUp(MouseEventArgs& args) override
         {
-            bool result = Dragging;
+            if (Dragging) args.Handle();
             Dragging = false;
-            return result;
         }
-        virtual bool OnMouseMove(vec2i pos) override
+        virtual void OnMouseMove(MouseEventArgs& args) override
         {
             if (Dragging)
             {
-                vec2i delta = pos - MousePos;
-                MousePos = pos;
+                vec2i delta = args.Delta();
 
                 if (DragAction & Drag) SetPosition(GetPosition() + delta);
                 if (GetOwner())
@@ -72,9 +63,12 @@ namespace airs::gi
                     }
                 }
 
-                return true;
+                args.Handle();
             }
-            else return false;
         }
+
+    public:
+        DragActionType GetDragAction() const { return DragAction; }
+        void SetDragAction(DragActionType dat) { DragAction = dat; }
     };
 }

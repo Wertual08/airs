@@ -1,6 +1,6 @@
 #include "airs/Font.hpp"
 #include <stdexcept>
-#include "airs/Utilities.hpp"
+#include "airs/encoding.hpp"
 #include "AIRSWin.hpp"
 
 

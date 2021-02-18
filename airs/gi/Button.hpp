@@ -14,6 +14,31 @@ namespace airs::gi
         bool Selected = false;
         bool Pressed = false;
 
+    protected:
+        virtual void OnMouseDown(MouseEventArgs& args) override
+        {
+            if (!args.Handled() && Contains(args.Position()) && args.Key() == Key::LButton)
+            {
+                Pressed = true;
+                args.Handle();
+            }
+        }
+        virtual void OnMouseUp(MouseEventArgs& args) override
+        {
+            if (Pressed) args.Handle();
+            Pressed = false;
+        }
+        virtual void OnMouseMove(MouseEventArgs& args) override
+        {
+            if (Pressed) args.Handle();
+            else if (!args.Handled() && Contains(args.Position()))
+            {
+                Selected = true; 
+                args.Handled();
+            }
+            else Selected = false;
+        }
+
     public:
         Renderer::Image GetReleasedImage() const { return ReleasedImage; }
         void SetReleasedImage(Renderer::Image img) { ReleasedImage = img; }
@@ -21,36 +46,6 @@ namespace airs::gi
         void SetSelectedImage(Renderer::Image img) { SelectedImage = img; }
         Renderer::Image GetPressedImage() const { return PressedImage; }
         void SetPressedImage(Renderer::Image img) { PressedImage = img; }
-
-        virtual bool OnMouseDown(vec2i pos, key key) override
-        {
-            if (Contains(pos) && key == key::LButton)
-            {
-                Pressed = true;
-                return true;
-            }
-            else return false;
-        }
-        virtual bool OnMouseUp(vec2i pos, key key) override
-        {
-            bool result = Pressed;
-            Pressed = false;
-            return result;
-        }
-        virtual bool OnMouseMove(vec2i pos) override
-        {
-            if (Pressed) return true;
-            else if (Contains(pos))
-            {
-                Selected = true;
-                return true;
-            }
-            else
-            {
-                Selected = false;
-                return false;
-            }
-        }
 
         void Render(Renderer& renderer) override 
         { 

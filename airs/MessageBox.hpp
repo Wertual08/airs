@@ -10,7 +10,7 @@ namespace airs
 	class MessageBox
 	{
 	public:
-		enum class Result : int32_t
+		enum class Result : std::int32_t
 		{
 			Ok =				1,
 			Cancel =			2,
@@ -22,7 +22,7 @@ namespace airs
 			TryAgain =			10,
 			Continue =			11,
 		};
-		enum Button : uint32_t
+		enum Button : std::uint32_t
 		{
 			Ok =				0x00000000L,
 			OkCancel =			0x00000001L,
@@ -33,7 +33,7 @@ namespace airs
 			CancelTryContinue = 0x00000006L,
 			Help =				0x00004000L,
 		};
-		enum Icon : uint32_t
+		enum Icon : std::uint32_t
 		{
 			Hand =				0x00000010L,
 			Question =			0x00000020L,
@@ -45,20 +45,20 @@ namespace airs
 			Information =		Asterisk,
 			Stop =				Hand,
 		};
-		enum Default : uint32_t
+		enum Default : std::uint32_t
 		{
 			Button1 =			0x00000000L,
 			Button2 =			0x00000100L,
 			Button3 =			0x00000200L,
 			Button4 =			0x00000300L,
 		};
-		enum Modal : uint32_t
+		enum Modal : std::uint32_t
 		{
 			App =				0x00000000L,
 			System =			0x00001000L,
 			Task =				0x00002000L,
 		};
-		enum Option : uint32_t
+		enum Option : std::uint32_t
 		{
 			DesktopOnly =		0x00020000L,
 			Riht =				0x00080000L,
@@ -70,11 +70,11 @@ namespace airs
 
 		static Result Show(const std::string& message);
 		static Result Show(const std::string& message, const std::string& caption);
-		static Result Show(const std::string& message, uint32_t options);
-		static Result Show(const std::string& message, const std::string& caption, uint32_t options);
+		static Result Show(const std::string& message, std::uint32_t options);
+		static Result Show(const std::string& message, const std::string& caption, std::uint32_t options);
 		static Result Show(const Window& window, const std::string& message);
 		static Result Show(const Window& window, const std::string& message, const std::string& caption);
-		static Result Show(const Window& window, const std::string& message, uint32_t options);
-		static Result Show(const Window& window, const std::string& message, const std::string& caption, uint32_t options);
+		static Result Show(const Window& window, const std::string& message, std::uint32_t options);
+		static Result Show(const Window& window, const std::string& message, const std::string& caption, std::uint32_t options);
 	};
 }

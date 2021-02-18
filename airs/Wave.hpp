@@ -8,8 +8,6 @@ namespace airs
 {
 	class Wave
 	{
-		friend class Speaker;
-
 	public:
 		enum Format_t : int32_t
 		{

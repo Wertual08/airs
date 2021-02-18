@@ -129,16 +129,16 @@ namespace airs
 			void SetCursor(float x, float y);
 			void OnMouseMove(float x, float y);
 			void OnMouseWheel(float d);
-			void OnKeyDown(key b);
-			void OnKeyUp(key b);
+			void OnKeyDown(Key b);
+			void OnKeyUp(Key b);
 			bool OnChar(char32_t c);
 			void CrearState();
 
 		public:
 			void LockChars(bool flushkeystates = true);
 			void UnlockChars();
-			bool KeyState(key b) const;
-			bool operator[](key b) const;
+			bool KeyState(Key b) const;
+			bool operator[](Key b) const;
 			float MouseX() const;
 			float MouseY() const;
 			vec2f Mouse() const;
@@ -177,14 +177,14 @@ namespace airs
 		inline virtual void OnResize(std::int32_t w, std::int32_t h);
 		inline virtual void OnPaint();
 		inline virtual void OnKillFocus();
-		inline virtual void OnMouseDown(std::int32_t x, std::int32_t y, key k);
-		inline virtual void OnMouseUp(std::int32_t x, int32_t y, key k);
+		inline virtual void OnMouseDown(std::int32_t x, std::int32_t y, Key k);
+		inline virtual void OnMouseUp(std::int32_t x, int32_t y, Key k);
 		inline virtual void OnMouseWheel(std::int32_t x, std::int32_t y, float d);
 		inline virtual void OnMouseHWheel(std::int32_t x, std::int32_t y, float d);
 		inline virtual void OnMouseMove(std::int32_t x, std::int32_t y);
 		inline virtual void OnMouseLeave();
-		inline virtual void OnKeyDown(key k);
-		inline virtual void OnKeyUp(key k);
+		inline virtual void OnKeyDown(Key k);
+		inline virtual void OnKeyUp(Key k);
 		inline virtual void OnChar(char32_t c);
 		inline virtual void OnUniChar(char32_t c);
 
@@ -223,14 +223,14 @@ namespace airs
 		delegate<void()> Paint;
 		delegate<void()> KillFocus;
 
-		delegate<void(std::int32_t, std::int32_t, key)> MouseDown;
-		delegate<void(std::int32_t, std::int32_t, key)> MouseUp;
+		delegate<void(std::int32_t, std::int32_t, Key)> MouseDown;
+		delegate<void(std::int32_t, std::int32_t, Key)> MouseUp;
 		delegate<void(std::int32_t, std::int32_t, float)> MouseWheel;
 		delegate<void(std::int32_t, std::int32_t, float)> MouseHWheel;
 		delegate<void(std::int32_t, std::int32_t)> MouseMove;
 		delegate<void()> MouseLeave;
-		delegate<void(key)> KeyDown;
-		delegate<void(key)> KeyUp;
+		delegate<void(Key)> KeyDown;
+		delegate<void(Key)> KeyUp;
 		delegate<void(char32_t)> Char;
 		delegate<void(char32_t)> UniChar;
 

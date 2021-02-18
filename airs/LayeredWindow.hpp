@@ -16,13 +16,13 @@ namespace airs
 		void PerformClosing();
 
 	protected:
-		virtual void OnMouseDown(int32_t x, int32_t y, key k) override;
+		virtual void OnMouseDown(int32_t x, int32_t y, Key k) override;
 		virtual void OnMouseMove(int32_t x, int32_t y) override;
-		virtual void OnMouseUp(int32_t x, int32_t y, key k) override;
+		virtual void OnMouseUp(int32_t x, int32_t y, Key k) override;
 		virtual void OnMouseWheel(int32_t x, int32_t y, float d) override;
 		virtual void OnMouseHWheel(int32_t x, int32_t y, float d) override;
-		virtual void OnKeyDown(key k) override;
-		virtual void OnKeyUp(key k) override;
+		virtual void OnKeyDown(Key k) override;
+		virtual void OnKeyUp(Key k) override;
 		virtual void OnChar(char32_t c) override;
 		virtual void OnUniChar(char32_t c) override;
 

@@ -1,0 +1,179 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\Utilities">
+      <UniqueIdentifier>{a854c56e-62af-4a77-b3fa-4a8080c4f3a3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Windows">
+      <UniqueIdentifier>{514f4038-9f09-47b7-adf5-8a2c589d1150}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Graphics">
+      <UniqueIdentifier>{5da9b3cf-192a-4332-bd8d-923c27b7b926}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Graphics\Bindables">
+      <UniqueIdentifier>{a8c3dee7-26b2-4a46-bffa-c3f704313904}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Graphics\Objects">
+      <UniqueIdentifier>{bea1dff2-e17f-4651-882e-3fefe90fddfc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Windows\Graphics Interface">
+      <UniqueIdentifier>{84540fe0-4ba7-4a40-9c44-9420d263b72c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="airs\Charset.hpp">
+      <Filter>Source Files\Graphics\Bindables</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\Bitmap.hpp">
+      <Filter>Source Files\Graphics\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\Font.hpp">
+      <Filter>Source Files\Graphics\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\Graphics.hpp">
+      <Filter>Source Files\Graphics\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\Surface.hpp">
+      <Filter>Source Files\Graphics\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\Wave.hpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\delegate.hpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\KeyCodes.hpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\math.hpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\PreciseSleeper.hpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\ring.hpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\Timer.hpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\timestamp.hpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\encoding.hpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\binary.hpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\gi\Renderer.hpp">
+      <Filter>Source Files\Windows\Graphics Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\gi\Button.hpp">
+      <Filter>Source Files\Windows\Graphics Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\gi\ContainerWindow.hpp">
+      <Filter>Source Files\Windows\Graphics Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\gi\Dragger.hpp">
+      <Filter>Source Files\Windows\Graphics Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\gi\Element.hpp">
+      <Filter>Source Files\Windows\Graphics Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\gi\EventArgs.hpp">
+      <Filter>Source Files\Windows\Graphics Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\gi\Label.hpp">
+      <Filter>Source Files\Windows\Graphics Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\gi\Panel.hpp">
+      <Filter>Source Files\Windows\Graphics Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\ThreadWindow.hpp">
+      <Filter>Source Files\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\Cursor.hpp">
+      <Filter>Source Files\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\Layer.hpp">
+      <Filter>Source Files\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\LayeredWindow.hpp">
+      <Filter>Source Files\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\MessageBox.hpp">
+      <Filter>Source Files\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="airs\Window.hpp">
+      <Filter>Source Files\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\AIRSWin.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Charset.cpp">
+      <Filter>Source Files\Graphics\Bindables</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Bitmap.cpp">
+      <Filter>Source Files\Graphics\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Font.cpp">
+      <Filter>Source Files\Graphics\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Timer.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PreciseSleeper.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\math.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Window.cpp">
+      <Filter>Source Files\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Cursor.cpp">
+      <Filter>Source Files\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MessageBox.cpp">
+      <Filter>Source Files\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Graphics.cpp">
+      <Filter>Source Files\Graphics\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Surface.cpp">
+      <Filter>Source Files\Graphics\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Layer.cpp">
+      <Filter>Source Files\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\LayeredWindow.cpp">
+      <Filter>Source Files\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ThreadWindow.cpp">
+      <Filter>Source Files\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gi\ContainerWindow.cpp">
+      <Filter>Source Files\Windows\Graphics Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Wave.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\binary.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\encoding.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

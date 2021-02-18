@@ -5,7 +5,7 @@
 
 namespace airs
 {
-	enum class key : int32_t
+	enum class Key : int32_t
 	{
 		Modifiers = -65536,
 		None = 0,

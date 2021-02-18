@@ -1,4 +1,4 @@
-#include "airs/Utilities.hpp"
+#include "airs/encoding.hpp"
 #include <codecvt>
 #include <istream>
 #include <vector>
@@ -7,55 +7,59 @@
 
 namespace airs
 {
-    std::string to_utf8(const std::wstring& s)
+    std::string to_utf8(const std::wstring &s)
     {
         return std::move(std::wstring_convert<std::codecvt<wchar_t, char, std::mbstate_t>, wchar_t>().to_bytes(s));
     }
-    std::string to_utf8(const std::u16string& s)
+    std::string to_utf8(const std::u16string &s)
     {
         return std::move(std::wstring_convert<std::codecvt<char16_t, char, std::mbstate_t>, char16_t>().to_bytes(s));
     }
-    std::string to_utf8(const std::u32string& s)
+    std::string to_utf8(const std::u32string &s)
     {
         return std::move(std::wstring_convert<std::codecvt<char32_t, char, std::mbstate_t>, char32_t>().to_bytes(s));
     }
-    std::u16string to_utf16(const std::string& s)
+
+    std::u16string to_utf16(const std::string &s)
     {
         return std::move(std::wstring_convert<std::codecvt<char16_t, char, std::mbstate_t>, char16_t>().from_bytes(s));
     }
-    std::u16string to_utf16(const std::wstring& s)
+    std::u16string to_utf16(const std::wstring &s)
     {
         return std::move(to_utf16(to_utf8(s)));
     }
-    std::u16string to_utf16(const std::u32string& s)
+    std::u16string to_utf16(const std::u32string &s)
     {
         return std::move(to_utf16(to_utf8(s)));
     }
-    std::u32string to_utf32(const std::string& s)
+
+    std::u32string to_utf32(const std::string &s)
     {
         return std::move(std::wstring_convert<std::codecvt<char32_t, char, std::mbstate_t>, char32_t>().from_bytes(s));
     }
-    std::u32string to_utf32(const std::wstring& s)
+    std::u32string to_utf32(const std::wstring &s)
     {
         return std::move(to_utf32(to_utf8(s)));
     }
-    std::u32string to_utf32(const std::u16string& s) 
+    std::u32string to_utf32(const std::u16string &s)
     {
         return std::move(to_utf32(to_utf8(s)));
     }
-    std::wstring to_wide(const std::string& s)
+
+    std::wstring to_wide(const std::string &s)
     {
         return std::move(std::wstring_convert<std::codecvt<wchar_t, char, std::mbstate_t>, wchar_t>().from_bytes(s));
     }
-    std::wstring to_wide(const std::u16string& s)
+    std::wstring to_wide(const std::u16string &s)
     {
         return std::move(to_wide(to_utf8(s)));
     }
-    std::wstring to_wide(const std::u32string& s)
+    std::wstring to_wide(const std::u32string &s)
     {
         return std::move(to_wide(to_utf8(s)));
     }
-    std::u32string read_with_bom(std::istream& src)
+
+    std::u32string read_with_bom(std::istream &src)
     {
         enum class encoding {
             encoding_utf32be = 0,
@@ -139,5 +143,48 @@ namespace airs
         default:
             return to_utf32(buffer);
         }
+    }
+
+    char32_t utf8_read(const std::string &s, std::size_t &cur)
+    {
+        constexpr char32_t error = U'\xffff';
+        static constexpr char utf8_lengths[] = {
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 0
+        };
+        static constexpr int utf8_shiftc[] = {
+            0, 18, 12, 6, 0
+        };
+        static constexpr char utf8_masks[] = {
+            0, 0b01111111, 0b00011111,
+            0b00001111, 0b00000111
+        };
+
+        if (cur >= s.size()) return U'\0';
+
+        unsigned char f = static_cast<unsigned char>(s[cur]);
+        std::size_t len = utf8_lengths[f >> 3];
+        if (len < 1)
+        {
+            cur++;
+            return error;
+        }
+
+        char32_t res = static_cast<char32_t>(f & utf8_masks[len]) << 18;
+        if (cur + len > s.size())
+        {
+            cur++;
+            return error;
+        }
+
+        switch (len) 
+        {
+        case 4: res |= static_cast<char32_t>(s[cur + 3] & 0x3f) << 0;
+        case 3: res |= static_cast<char32_t>(s[cur + 2] & 0x3f) << 6;
+        case 2: res |= static_cast<char32_t>(s[cur + 1] & 0x3f) << 12;
+        }
+        res >>= utf8_shiftc[len];
+        cur += len;
+        return res;
     }
 }
